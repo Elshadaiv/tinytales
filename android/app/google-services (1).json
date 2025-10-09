@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "488350078513",
+    "firebase_url": "https://tinytalesapp-4fe9d-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "tinytalesapp-4fe9d",
+    "storage_bucket": "tinytalesapp-4fe9d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:488350078513:android:f74a9bdb3704af4da9e710",
+        "android_client_info": {
+          "package_name": "com.example.tinytales"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7Wt44QnqjFqsna5KQaqk2xlsFIJEHkYM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:488350078513:android:abf53d4168ea7e53a9e710",
+        "android_client_info": {
+          "package_name": "com.example.tinytalesapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7Wt44QnqjFqsna5KQaqk2xlsFIJEHkYM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
