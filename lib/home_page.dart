@@ -3,57 +3,80 @@ import 'package:flutter/material.dart';
 import 'package:tinytales/insights_page.dart';
 import 'package:tinytales/profile_page.dart';
 import 'package:tinytales/tracking_page.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 
 class  HomePage extends StatefulWidget {
-  const HomePage({super.key});
+   HomePage({super.key});
 
-  @override
-  State<HomePage> createState() => HomePageState();
+
+   @override
+   State<HomePage> createState() => HomePageState();
 }
 
 class HomePageState extends State<HomePage> {
+  final user = FirebaseAuth.instance.currentUser;
 
   int currentPage = 0;
-  List<Widget> pages= const [
+
+  List<Widget> pages = const [
     ProfilePage(),
-InsightsPage(),
-TrackingPage(),
+    InsightsPage(),
+    TrackingPage(),
   ];
-  void signUserOut()
-  {
+
+  void signUserOut() {
     FirebaseAuth.instance.signOut();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(actions: [IconButton(onPressed: signUserOut, icon: Icon(Icons.logout))],),
-      body: pages[0],
-      floatingActionButton: FloatingActionButton(onPressed: () {
-        debugPrint('Button pressed');
-
-      },
-
-        child: Icon(Icons.add),
-      ),
-      bottomNavigationBar: NavigationBar(
-        destinations: const[
-          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.info), label: 'Insights'),
-          NavigationDestination(icon: Icon(Icons.track_changes), label: 'Tracking'),
-          NavigationDestination(icon: Icon(Icons.people), label: 'Community'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+      appBar: AppBar(
+        actions: [
+          IconButton(onPressed: signUserOut, icon: const Icon(Icons.logout)),
         ],
-
-        onDestinationSelected: (int index) {
-          setState(() {
-            currentPage = index;
-          });
-        },
-        selectedIndex: currentPage,
+      ),
+      body: Center(
+        child: Text('Logged in as ' + (user?.email ?? 'Unknown')),
       ),
 
+      bottomNavigationBar: Container(
+        color: Colors.black,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 17),
+          child: GNav(
+            backgroundColor: Colors.black,
+              color: Colors.white,
+              activeColor: Colors.white,
+              tabBackgroundColor: Colors.purple,
+              gap: 8,
+              padding: const EdgeInsets.all(16),
+              tabs: const [
+              GButton(icon: Icons.home,
+                text: 'Home',
+              ),
+              GButton(icon: Icons.info,
+                text: 'Insights',
+              ),
+              GButton(icon: Icons.track_changes,
+                text: 'Tracking',
+              ),
+              GButton(icon: Icons.people,
+                text: 'Community',
+              ),
+            GButton(icon: Icons.person,
+              text: 'Profile',
+            ),
+            ],
+              onTabChange: (int index) {
+                setState(() {
+                print(index);
+                });
+              }
+          ),
+        ),
+      ),
     );
-
   }
-} 
+}
+
