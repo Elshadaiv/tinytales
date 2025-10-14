@@ -32,7 +32,3 @@ class MyButton extends StatelessWidget {
   }
 }
 
-
-    );
-  }
-}

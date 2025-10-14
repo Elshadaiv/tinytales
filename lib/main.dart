@@ -27,5 +27,4 @@ class TinyTalesApp extends StatelessWidget {
 }
 
 
-  }
-}
+
