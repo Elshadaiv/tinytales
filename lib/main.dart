@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:tinytales/pages/auth_page.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Firebase.initializeApp();
+ await  Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const TinyTalesApp());
 }
 
@@ -17,32 +21,8 @@ class TinyTalesApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.purple
       ),
-      home: const Page1(),
+      home: const AuthPage(),
     );
-  }
-}
-
-
-
-
-
-class Page1 extends StatefulWidget {
-  const Page1({super.key});
-
-  @override
-  State<Page1> createState() => _Page1State();
-}
-
-class _Page1State extends State<Page1> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Tiny Tales'),
-      ),
-      floatingActionButton: FloatingActionButton(onPressed: () {}
-      ),
-    );
-
   }
 }
 
