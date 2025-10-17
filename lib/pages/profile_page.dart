@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tinytales/pages/baby_profile_page.dart';
 import 'package:tinytales/components/my_button.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tinytales/services/firestore.dart';
 
 
@@ -27,9 +27,9 @@ class _ProfilePageState extends State<ProfilePage> {
   final newBabyHospitalController = TextEditingController();
 
   final currentUser = FirebaseAuth.instance.currentUser!;
-  void save()
+  void saveBabyProfile()
   {
-    Navigator.pop(context);
+
   }
 
   void cancel()
@@ -94,7 +94,7 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Text("Cancel"),
         ),
         MaterialButton(
-          onPressed: save,
+          onPressed: saveBabyProfile,
           child: Text("Upload"),
         ),
       ],
