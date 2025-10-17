@@ -67,4 +67,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'tinytalesapp-4fe9d.firebasestorage.app',
     iosBundleId: 'com.example.tinytales',
   );
+
 }
