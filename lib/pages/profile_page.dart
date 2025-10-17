@@ -44,7 +44,6 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
 
-
     final firestore = FirebaseFirestore.instance;
     final baby = babyData(
       name: newBabyNameController.text,
@@ -161,7 +160,7 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         backgroundColor: Colors.grey[300],
       ),
-      body: ListView(
+      body: ListView.(
         children: [
           const SizedBox(
             height: 20
