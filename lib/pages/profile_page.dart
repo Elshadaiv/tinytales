@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:tinytales/data/baby_data.dart';
 import 'package:tinytales/pages/baby_profile_page.dart';
 import 'package:tinytales/components/my_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -20,17 +21,63 @@ class _ProfilePageState extends State<ProfilePage> {
 
 
   final newBabyNameController = TextEditingController();
+  final newBabyGenderController = TextEditingController();
   final newBabyDOBController = TextEditingController();
   final newBabyWeightController = TextEditingController();
   final newBabyHeightController = TextEditingController();
-  final newBabyGenderController = TextEditingController();
   final newBabyHospitalController = TextEditingController();
 
   final currentUser = FirebaseAuth.instance.currentUser!;
-  void saveBabyProfile()
+
+
+  void saveBabyProfile() async
   {
 
+    final BuildContext stateContext = this.context;
+    showDialog(
+      context: stateContext,
+      builder: (BuildContext dialogContext)
+      {
+        return const Center(
+          child:  CircularProgressIndicator(),
+        );
+      },
+    );
+
+
+    final firestore = FirebaseFirestore.instance;
+    final baby = babyData(
+      name: newBabyNameController.text,
+      gender: newBabyGenderController.text,
+      dob: newBabyDOBController.text,
+      weight: newBabyWeightController.text,
+      height: newBabyHeightController.text,
+      hospital: newBabyHospitalController.text,
+      userId: currentUser.uid,
+    );
+
+    try {
+      await firestore.collection('baby_profiles').add(baby.toMap());
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(
+              'Your baby has sucessfully been added to your profile.'))
+      );
+
+      newBabyNameController.clear();
+      newBabyGenderController.clear();
+      newBabyDOBController.clear();
+      newBabyWeightController.clear();
+      newBabyHeightController.clear();
+      newBabyHospitalController.clear();
+    } catch (e) {
+      print('Error');
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create baby profile.'))
+      );
+    }
   }
+
 
   void cancel()
   {
@@ -56,6 +103,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               TextField(
+                controller: newBabyGenderController,
+                decoration: const InputDecoration(
+                    labelText: "Gender"
+                ),
+              ),
+              TextField(
                 controller: newBabyDOBController,
                 decoration: const InputDecoration(
                     labelText: "Date of Birth"
@@ -73,12 +126,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     labelText: "Height"
                 ),
               ),
-              TextField(
-                controller: newBabyGenderController,
-                decoration: const InputDecoration(
-                    labelText: "Gender"
-                ),
-              ),
+
               TextField(
                 controller: newBabyHospitalController,
                 decoration: const InputDecoration(
