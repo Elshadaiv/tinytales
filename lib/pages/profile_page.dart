@@ -40,8 +40,10 @@ class _ProfilePageState extends State<ProfilePage> {
       {
         return const Center(
           child:  CircularProgressIndicator(),
+
         );
       },
+
     );
 
     final firestore = FirebaseFirestore.instance;
@@ -61,7 +63,9 @@ class _ProfilePageState extends State<ProfilePage> {
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(
               'Your baby has sucessfully been added to your profile.'))
+
       );
+      Navigator.pop(context);
 
       newBabyNameController.clear();
       newBabyGenderController.clear();
@@ -160,7 +164,7 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         backgroundColor: Colors.grey[300],
       ),
-      body: ListView.(
+      body: ListView(
         children: [
           const SizedBox(
             height: 20
@@ -183,6 +187,58 @@ class _ProfilePageState extends State<ProfilePage> {
             text: 'Create Baby Profile',
             onTap: createBabyProfile,
           ),
+
+          const SizedBox(
+              height: 20
+          ),
+
+    StreamBuilder<QuerySnapshot>(
+  stream: FirebaseFirestore.instance.
+        collection('baby_profiles')
+      .where('userId',isEqualTo: currentUser.uid)
+      .snapshots(),
+
+      builder: (context, snapshot)
+        {
+          if(snapshot.connectionState == ConnectionState.waiting)
+            {
+              return Center(child: CircularProgressIndicator());
+            }
+
+          if(!snapshot.hasData || snapshot.data!.docs.isEmpty)
+            {
+              return Center(child: Text('Theres not profiles created yet. Get started!'));
+            }
+
+          final babies = snapshot.data!.docs;
+
+          return ListView.builder(
+            physics: NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              itemCount: babies.length,
+              itemBuilder: (context, index)
+              {
+                final data = babies[index].data() as Map<String, dynamic>;
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  color: Colors.white,
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.child_care,
+                      color:Colors.black ,
+                    ),
+                    title: Text(data['name'] ?? 'Baby is unkown',
+                    ),
+                    subtitle: Text(
+                        'DOB: ${data['dob'] ?? 'N/A'}\nGender: ${data['gender'] ?? 'N/A'}',
+                    ),
+                  ),
+                );
+              },
+          );
+        },
+),
+
         ],
       ),
     );
