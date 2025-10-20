@@ -60,12 +60,12 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       await firestore.collection('baby_profiles').add(baby.toMap());
       Navigator.pop(context);
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(
               'Your baby has sucessfully been added to your profile.'))
 
       );
-      Navigator.pop(context);
 
       newBabyNameController.clear();
       newBabyGenderController.clear();
@@ -74,6 +74,7 @@ class _ProfilePageState extends State<ProfilePage> {
       newBabyHeightController.clear();
       newBabyHospitalController.clear();
     } catch (e) {
+      Navigator.pop(context);
       print('Error');
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to create baby profile.'))
@@ -238,6 +239,15 @@ class _ProfilePageState extends State<ProfilePage> {
           );
         },
 ),
+          const SizedBox(
+              height: 20
+          ),
+
+          MyButton(
+            text: 'Immunisation Passport ',
+            onTap: createBabyProfile,
+          ),
+
 
         ],
       ),
