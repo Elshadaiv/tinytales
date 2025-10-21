@@ -4,13 +4,14 @@ import 'package:tinytales/data/baby_data.dart';
 import 'package:tinytales/pages/baby_profile_page.dart';
 import 'package:tinytales/components/my_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tinytales/pages/immunisation_passport_page.dart';
 import 'package:tinytales/services/firestore.dart';
 
 
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key, this.CreateBabyProifle});
-  final Function()? CreateBabyProifle;
+  const ProfilePage({super.key, this.CreateBabyProifle, this.toImmunisationPassportPage});
+  final Function()? CreateBabyProifle, toImmunisationPassportPage;
 
 
   @override
@@ -245,12 +246,18 @@ class _ProfilePageState extends State<ProfilePage> {
 
           MyButton(
             text: 'Immunisation Passport ',
-            onTap: createBabyProfile,
+            onTap: toImmunisationPassportPage,
           ),
-
 
         ],
       ),
     );
+  }
+  void toImmunisationPassportPage() /// reminder this callout will be useful when i want to move the create baby methpds ontp its seeprate pages
+  {
+  Navigator.push(
+      context, MaterialPageRoute(
+      builder: (context) => const immunisationPassportPage())
+  );
   }
 }

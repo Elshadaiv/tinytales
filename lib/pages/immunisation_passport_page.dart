@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 
@@ -11,6 +12,17 @@ class immunisationPassportPage extends StatefulWidget {
 class _immunisationPassportPageState extends State<immunisationPassportPage> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    final user = FirebaseAuth.instance.currentUser;
+
+    return Scaffold(
+      backgroundColor: Colors.grey[300],
+      appBar: AppBar(
+        backgroundColor: Colors.grey[300],
+      ),
+      body: Center(
+        child: Text('Immunisation Passport Page ' +
+            (FirebaseAuth.instance.currentUser?.email ?? 'Unknown')),
+      ),
+    );
   }
 }
