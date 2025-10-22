@@ -21,7 +21,10 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
 
 
-  final newBabyNameController = TextEditingController();
+
+
+
+    final newBabyNameController = TextEditingController();
   final newBabyGenderController = TextEditingController();
   final newBabyDOBController = TextEditingController();
   final newBabyWeightController = TextEditingController();
@@ -31,8 +34,88 @@ class _ProfilePageState extends State<ProfilePage> {
   final currentUser = FirebaseAuth.instance.currentUser!;
 
 
+  bool validDate(String dateString) {
+    final reg = RegExp(r'^(\d{2})[\/\.-](\d{2})[\/\.-](\d{4})$');
+    final match = reg.firstMatch(dateString);
+
+    if (match == null) {
+      return false;
+    }
+    final day = int.parse(match.group(1)!);
+    final month = int.parse(match.group(2)!);
+    final year = int.parse(match.group(3)!);
+
+    if (day == null || month == null || year == null) {
+      return false;
+    }
+
+    if (month < 1 || month > 12 || day < 01 || day > 31) {
+      return false;
+    }
+
+    final formatted = '$year-${match.group(2)!}-${match.group(1)!}';
+    final parsed = DateTime.tryParse(formatted);
+
+    if (parsed == null) {
+      return false;
+    }
+
+    if (parsed.isAfter(DateTime.now())) {
+      return false;
+    }
+    return true;
+  }
+
+
   void saveBabyProfile() async
   {
+
+  String name = newBabyNameController.text.trim();
+  String gender = newBabyGenderController.text.trim();
+  String dob = newBabyDOBController.text.trim();
+  String weight = newBabyWeightController.text.trim();
+  String height = newBabyHeightController.text.trim();
+String hospital = newBabyHospitalController.text.trim();
+
+
+if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.isEmpty || hospital.isEmpty)
+  {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please Enter all fields before uploading')
+      ),
+    );
+    return;
+  }
+
+  if (!RegExp(r'^[0-9/.-]+$').hasMatch(dob)) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Date of birth must contain numbers (e.g. 12/05/2024).')),
+    );
+    return;
+  }
+
+  if(RegExp(r'[0-9]').hasMatch(name)) {
+    ScaffoldMessenger.of(context).showSnackBar(
+
+      const SnackBar(
+          content: Text('Name cannot contain any numbers, try again!')
+      ),
+    );
+    return;
+  }
+
+
+  if(RegExp(r'[0-9]').hasMatch(gender))
+  {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Gender cannot contain any numbers, try again!')
+      ),
+    );
+    return;
+  }
+
+
+
 
     final BuildContext stateContext = this.context;
     showDialog(
@@ -48,7 +131,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
 
     final firestore = FirebaseFirestore.instance;
+    final docRef = firestore.collection('baby_profiles').doc();
     final baby = babyData(
+      babyId: docRef.id,
       name: newBabyNameController.text,
       gender: newBabyGenderController.text,
       dob: newBabyDOBController.text,
@@ -128,7 +213,7 @@ class _ProfilePageState extends State<ProfilePage> {
               TextField(
                 controller: newBabyHeightController,
                 decoration: const InputDecoration(
-                    labelText: "Height"
+                    labelText: "Height (Cms)"
                 ),
               ),
 

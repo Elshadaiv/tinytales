@@ -1,6 +1,7 @@
 
 class babyData
 {
+  final String babyId;
   final String name;
   final String gender;
   final String dob;
@@ -11,6 +12,7 @@ class babyData
 
   babyData(
   {
+    required this.babyId,
     required this.name,
     required this.gender,
     required this.dob,
@@ -23,6 +25,7 @@ class babyData
 
   Map<String, dynamic> toMap() {
     return {
+      'babyId': babyId,
       'name': name,
       'gender': gender,
       'dob': dob,
