@@ -90,7 +90,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   }
 
-  void createBabyProfile()
+  void createBabyProfile() // NEED TO DO ERROR HANDLING + DELETE + UPDATE METHODS FOR BABY
   {
     final BuildContext stateContext = this.context;
     showDialog(
