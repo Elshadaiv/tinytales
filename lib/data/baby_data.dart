@@ -36,5 +36,42 @@ class babyData
 
     };
   }
+
+}
+
+
+class Immunisation
+{
+final String name;
+ String dateGiven;
+bool isGiven;
+
+Immunisation(
+{
+  required this.name,
+  this.dateGiven = '',
+  this.isGiven = false
+
+});
+
+Map<String, dynamic> toMap()
+{
+  return {
+    'name': name,
+    'dateGiven': dateGiven,
+    'isGiven': isGiven,
+  };
+}
+
+factory Immunisation.fromMap(Map<String, dynamic> map)
+{
+  return Immunisation(
+
+        name: map['name'],
+        dateGiven: map ['dateGiven'] ?? '',
+      isGiven: map ['isGivem'] ?? false,
+  );
+
+}
 }
 

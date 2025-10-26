@@ -1,15 +1,30 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:tinytales/data/baby_data.dart';
 
 
 class immunisationPassportPage extends StatefulWidget {
-  const immunisationPassportPage({super.key});
-
+  const immunisationPassportPage({super.key, required this.babyId});
+  final String babyId;
   @override
   State<immunisationPassportPage> createState() => _immunisationPassportPageState();
 }
 
 class _immunisationPassportPageState extends State<immunisationPassportPage> {
+
+  List<Immunisation> vaccines =
+  [
+    Immunisation(name: '6-In-1 Vaccine'),
+    Immunisation(name: 'MMR'),
+    Immunisation(name: 'Polio'),
+    Immunisation(name: 'MenB'),
+
+  ];
+
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -19,20 +34,62 @@ class _immunisationPassportPageState extends State<immunisationPassportPage> {
       appBar: AppBar(
         backgroundColor: Colors.grey[300],
       ),
-      body: Center(
-        child: Text('Immunisation Passport Page ' +
-            (FirebaseAuth.instance.currentUser?.email ?? 'Unknown')),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+                itemCount: vaccines.length,
+                itemBuilder: (context, index) {
+                  final vaccine = vaccines[index];
+                  return ListTile(
+                    title: Text(vaccine.name),
+                    leading: Checkbox(value: vaccine.isGiven,
+                        onChanged: (val) {
+                          setState(() {
+                            vaccine.isGiven = val!;
+                          });
+                        }
+                    ),
+
+                    trailing: SizedBox(
+                      width: 120,
+                      child: TextField(
+                        controller: TextEditingController(
+                            text: vaccine.dateGiven),
+                        decoration: InputDecoration(
+                          labelText: 'Date Taken',
+                        ),
+                        onChanged: (val) {
+                          vaccine.dateGiven = val;
+                        },
+                      ),
+                    ),
+                  );
+                }
+            ),
+          ),
+
+          ElevatedButton(
+            onPressed: () async
+            {
+              for (var vaccine in vaccines) {
+                await firestore
+                    .collection('baby_profiles')
+                    .doc(widget.babyId)
+                    .collection('immunisations')
+                    .doc(vaccine.name)
+                    .set(vaccine.toMap());
+              }
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text('Ssaved'))
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
   }
-
-  //// GP NAME AND ADDRESS
-// FOR VACINATIONS IT WILL BE TABLE USER CAN PUT IN TO TRACK
-//Vaccine Name
-// 6 in 1
-// PCV
-// MenB
-// Rota
-// Age Given Manufacturer Batch Number Expiry Date Route/Site Administered by Date
-//HAVE THAT TRACKED
-}
+  }

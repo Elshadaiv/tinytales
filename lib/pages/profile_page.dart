@@ -144,7 +144,7 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
     );
 
     try {
-      await firestore.collection('baby_profiles').add(baby.toMap());
+      await docRef.set(baby.toMap());
       Navigator.pop(context);
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -319,6 +319,16 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
                     subtitle: Text(
                         'DOB: ${data['dob'] ?? 'N/A'}\nGender: ${data['gender'] ?? 'N/A'}',
                     ),
+                    onTap: ()
+                      {
+                        Navigator.push(
+                            context,
+                        MaterialPageRoute(
+                            builder: (context) => immunisationPassportPage(babyId: data['babyId']),
+                        ),
+                        );
+                      },
+
                   ),
                 );
               },
@@ -342,7 +352,8 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
   {
   Navigator.push(
       context, MaterialPageRoute(
-      builder: (context) => const immunisationPassportPage())
+      builder: (context) => immunisationPassportPage(babyId: 'babyId'),
+  ),
   );
   }
 }
