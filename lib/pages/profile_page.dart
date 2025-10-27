@@ -319,12 +319,14 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
                     subtitle: Text(
                         'DOB: ${data['dob'] ?? 'N/A'}\nGender: ${data['gender'] ?? 'N/A'}',
                     ),
-                    onTap: ()
-                      {
-                        Navigator.push(
-                            context,
+                    onTap: () {
+                      Navigator.push(
+                        context,
                         MaterialPageRoute(
-                            builder: (context) => immunisationPassportPage(babyId: data['babyId']),
+                          builder: (context) => ImmunisationPassportPage(
+                            babyId: data['babyId'],
+                            babyName: data['name'],
+                          ),
                         ),
                         );
                       },
@@ -339,20 +341,19 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
               height: 20
           ),
 
-          MyButton(
-            text: 'Immunisation Passport ',
-            onTap: toImmunisationPassportPage,
-          ),
-
         ],
       ),
     );
   }
-  void toImmunisationPassportPage() /// reminder this callout will be useful when i want to move the create baby methpds ontp its seeprate pages
+  void toImmunisationPassportPage(String babyId, String babyName) /// reminder this callout will be useful when i want to move the create baby methpds ontp its seeprate pages
   {
-  Navigator.push(
-      context, MaterialPageRoute(
-      builder: (context) => immunisationPassportPage(babyId: 'babyId'),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ImmunisationPassportPage(
+          babyId: babyId,
+          babyName: babyName,
+        ),
   ),
   );
   }
