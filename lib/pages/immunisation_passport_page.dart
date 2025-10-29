@@ -63,6 +63,7 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
         ),
         centerTitle: true,
       ),
+
       body: Column(
         children: [
           Expanded(
@@ -97,6 +98,69 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
                 }
             ),
           ),
+
+          StreamBuilder<QuerySnapshot>(
+            stream: firestore
+                .collection('baby_profiles')
+                .doc(widget.babyId)
+                .collection('immunisations')
+                .snapshots(),
+            builder: (context, snapshot)
+            {
+              if (snapshot.connectionState == ConnectionState.waiting)
+              {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    'There\'s no immunisation records yet.',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                );
+              }
+
+              final immunisations = snapshot.data!.docs;
+
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: const [
+                    DataColumn(label: Text('Vaccine Name')),
+                    DataColumn(label: Text('Date Given')),
+                    DataColumn(label: Text('Status')),
+                  ],
+                  rows: immunisations.map((doc)
+                  {
+                    final data = doc.data() as Map<String, dynamic>;
+                    return DataRow(
+                      cells: [
+                        DataCell(Text(data['name'] ?? 'Unknown')),
+                        DataCell(Text(data['dateGiven'] ?? 'N/A')),
+                        DataCell(
+                          Icon(
+                            (data['isGiven'] ?? false)
+                                ? Icons.check_circle
+                                : Icons.cancel,
+                            color: (data['isGiven'] ?? false)
+                                ? Colors.green
+                                : Colors.red,
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              );
+            },
+          ),
+
+
+
+
+
 
           Padding(
             padding: const EdgeInsets.only(bottom: 40.0),
@@ -226,7 +290,7 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
                         ),
                       backgroundColor: Colors.green,
                       behavior: SnackBarBehavior.floating,
-                      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -239,7 +303,8 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
             ),
           ),
         ],
-      ),
-    );
+    ),
+      );
+
   }
   }

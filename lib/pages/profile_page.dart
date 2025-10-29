@@ -198,6 +198,7 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
                     labelText: "Gender"
                 ),
               ),
+
               TextField(
                 controller: newBabyDOBController,
                 decoration: const InputDecoration(
@@ -239,6 +240,143 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
     ),
     );
   }
+
+
+
+  void deleteBaby() async
+  {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('baby_profiles')
+        .where('userId', isEqualTo: currentUser.uid)
+        .get();
+
+    final babies = snapshot.docs;
+
+    if (babies.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Theres no baby profiles to delete. Create one!',
+            style: TextStyle(
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500
+            ),
+
+
+          ),
+          backgroundColor: Colors.purple,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 6,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Delete Baby Profile'
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: babies.length,
+              itemBuilder: (context, index) {
+                final data = babies[index].data() as Map<String, dynamic>;
+                return ListTile(
+                  leading: const Icon(Icons.child_care),
+                  title: Text(data['name'] ?? 'Unnamed Baby'),
+
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      confirmDeleteBaby(babies[index].id, data ['name']);
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+
+    );
+  }
+
+    void confirmDeleteBaby(String babyId, String babyName)
+    {
+      showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text( 'Confirm Delete',
+              style: TextStyle(
+                fontWeight: FontWeight.bold),
+              ),
+
+            content: Text( 'Are you sure you want to delete $babyName\'s profile?'
+            ' All saved information, including the baby immunisations passport will be lost'
+            ),
+              actions: [
+                TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+                ),
+                TextButton(
+                    onPressed: () async
+                {
+                  Navigator.pop(context);
+                  await FirebaseFirestore.instance
+                .collection('baby_profiles')
+                .doc(babyId)
+                .delete();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                content: Text('Profile has been deleted',
+                style: TextStyle(color: Colors.white),
+                ),
+
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
+                ),
+                );
+                },
+
+      child: Text(
+    'Delete',
+    style: TextStyle(color: Colors.purple),
+
+    ),
+                ),
+
+       ],
+          ),
+
+          );
+
+
+    }
+
+
+
+
+
+
 
 
   @override
@@ -342,9 +480,27 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
           ),
 
         ],
+
+
       ),
+      floatingActionButton: Padding(
+          padding: const EdgeInsets.only(bottom: 15.0, right: 10.0),
+      child: FloatingActionButton(
+          backgroundColor: Colors.red,
+          onPressed: deleteBaby,
+        child: const Icon(Icons.delete, color: Colors.white),
+      ),
+      ),
+
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
   }
+
+
+
+
+
+
   void toImmunisationPassportPage(String babyId, String babyName) /// reminder this callout will be useful when i want to move the create baby methpds ontp its seeprate pages
   {
     Navigator.push(
