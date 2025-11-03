@@ -106,55 +106,77 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
                 .collection('immunisations')
                 .snapshots(),
             builder: (context, snapshot)
-            {
-              if (snapshot.connectionState == ConnectionState.waiting)
-              {
-                return const Center(child: CircularProgressIndicator());
-              }
+    {
+    if (snapshot.connectionState == ConnectionState.waiting)
+    {
+    return const Center(child: CircularProgressIndicator());
+    }
 
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    'There\'s no immunisation records yet.',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
-                );
-              }
+    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+    return const Padding(
+    padding: EdgeInsets.all(16.0),
+    child: Text(
+    'There\'s no immunisation records yet.',
+    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+    ),
+    );
+    }
 
-              final immunisations = snapshot.data!.docs;
+    final immunisations = snapshot.data!.docs;
 
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columns: const [
-                    DataColumn(label: Text('Vaccine Name')),
-                    DataColumn(label: Text('Date Given')),
-                    DataColumn(label: Text('Status')),
-                  ],
-                  rows: immunisations.map((doc)
-                  {
-                    final data = doc.data() as Map<String, dynamic>;
-                    return DataRow(
-                      cells: [
-                        DataCell(Text(data['name'] ?? 'Unknown')),
-                        DataCell(Text(data['dateGiven'] ?? 'N/A')),
-                        DataCell(
-                          Icon(
-                            (data['isGiven'] ?? false)
-                                ? Icons.check_circle
-                                : Icons.cancel,
-                            color: (data['isGiven'] ?? false)
-                                ? Colors.green
-                                : Colors.red,
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
-                ),
+    return SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: DataTable(
+    columns: const [
+    DataColumn(label: Text('Vaccine Name')),
+    DataColumn(label: Text('Date Given')),
+    ],
+    rows: immunisations.map((doc)
+    {
+    final data = doc.data() as Map<String, dynamic>;
+
+    final List<dynamic> datesList = data['dates'] ?? [];
+    final List<String> dates =
+    datesList.map((d) => d.toString()).toList();
+
+    return DataRow(
+    cells: [
+    DataCell(Text(data['name'] ?? 'Unknown')),
+    DataCell(
+    dates.isEmpty
+    ? const Text('-')
+        : SizedBox(
+    height: 120,
+    width: 150,
+    child: Scrollbar(
+      thumbVisibility: true,
+    radius: const Radius.circular(8),
+    child: SingleChildScrollView(
+      scrollDirection: Axis.vertical,
+    child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: dates
+        .map(
+          (d) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2.0),
+        child: Text(
+          "• $d",
+          style: const TextStyle(fontSize: 14),
+        ),
+      ),
+    )
+        .toList(),
+    ),
+             ),
+    ),
+           ),
+          ),
+    ],
               );
-            },
+    }).toList(),
+             ),
+    );
+         },
           ),
 
 
@@ -162,7 +184,7 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
 
 
 
-          Padding(
+  Padding(
             padding: const EdgeInsets.only(bottom: 40.0),
             child: ElevatedButton(
               onPressed: () async
@@ -206,6 +228,7 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
 
               for (var vaccine in vaccines) {
                 final dateText = vaccine.dateGiven.trim();
+                if (dateText.isEmpty) continue;
 
 
                 if (dateText.isEmpty) {
@@ -267,19 +290,39 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
                 }
               }
 
-                if (hasError) return;
+              if (hasError) return;
 
+              for (var vaccine in vaccines)
+              {
+                if (vaccine.dateGiven.trim().isEmpty) continue;
 
-              for (var vaccine in vaccines) {
-                  await firestore
-                      .collection('baby_profiles')
-                      .doc(widget.babyId)
-                      .collection('immunisations')
-                      .doc(vaccine.name)
-                      .set(vaccine.toMap());
+                final vaccineRef = firestore
+                    .collection('baby_profiles')
+                    .doc(widget.babyId)
+                    .collection('immunisations')
+                    .doc(vaccine.name);
+                final doc = await vaccineRef.get();
+
+                if (doc.exists)
+                {
+                  final data = doc.data() as Map<String, dynamic>? ?? {};
+                  final existingDates = List<String>.from(data['dates'] ?? []);
+                  existingDates.add(vaccine.dateGiven.trim());
+                  await vaccineRef.update({'dates': existingDates});
+                } else
+                {
+                  await vaccineRef.set(
+                      {
+                    'name': vaccine.name,
+                    'dates': [vaccine.dateGiven.trim()],
+                    'isGiven': vaccine.isGiven,
+                  }
+                  );
                 }
+              }
 
-                ScaffoldMessenger.of(context).showSnackBar(
+
+              ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                         content: const Text('Ssaved',
                             style: TextStyle(

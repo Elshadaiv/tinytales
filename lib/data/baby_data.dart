@@ -43,14 +43,16 @@ class babyData
 class Immunisation
 {
 final String name;
- String dateGiven;
+List<String> dates;
 bool isGiven;
+String dateGiven;
 
 Immunisation(
 {
   required this.name,
+  this.dates = const [],
+  this.isGiven = false,
   this.dateGiven = '',
-  this.isGiven = false
 
 });
 
@@ -58,7 +60,7 @@ Map<String, dynamic> toMap()
 {
   return {
     'name': name,
-    'dateGiven': dateGiven,
+    'dates': dates,
     'isGiven': isGiven,
   };
 }
@@ -68,7 +70,7 @@ factory Immunisation.fromMap(Map<String, dynamic> map)
   return Immunisation(
 
         name: map['name'],
-        dateGiven: map ['dateGiven'] ?? '',
+dates: List<String>.from(map['dates'] ?? []),
       isGiven: map ['isGivem'] ?? false,
   );
 
