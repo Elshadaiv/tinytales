@@ -28,6 +28,9 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
 
   String? babyDob;
 
+  List<String> recommendedVaccines = [];
+
+
 
   @override
   void initState() {
@@ -57,7 +60,19 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
               {
                 2: ['6-in-1', 'PVC', 'Rotavirus', 'MenB'],
                 4: ['6-in-1', 'PVC','Rotavirus'],
-              }
+                6: ['6-in-1', 'MemB'],
+                12:['MMR', 'MenB', 'PVC'],
+                13:['Hib/MenC','PVC'],
+              };
+
+          recommendedVaccines = [];
+          vaccinesSchedule.forEach((month, vaccines)
+              {
+                if(ageMonths >= month && ageMonths < month + 2)
+                  {
+                    recommendedVaccines = vaccines;
+                  }
+              });
         });
       }
   }
@@ -84,6 +99,21 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
 
       body: Column(
         children: [
+          (recommendedVaccines.isEmpty)
+            ? const SizedBox.shrink()
+          :Padding(
+        padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text( "Reccommended vaccines for age:",
+          style:  TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+            ),
+          const SizedBox(height: 8,),
+          ...recommendedVaccines.map((v) => Text("• $v")).toList(),
+          ],
+          ),
+          ),
           Expanded(
             child: ListView.builder(
                 itemCount: vaccines.length,
