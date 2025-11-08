@@ -8,6 +8,7 @@ class ImmunisationPassportPage extends StatefulWidget {
   const ImmunisationPassportPage({super.key, required this.babyId,required this.babyName});
   final String babyId;
   final String babyName;
+
   @override
   State<ImmunisationPassportPage> createState() => _ImmunisationPassportPageState();
 }
@@ -42,9 +43,26 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
       {
         setState(() {
           babyDob = doc['dob'];
+          final part = babyDob!.split(RegExp(r'[\/\.-]'));
+          final birthDate = DateTime(
+            int.parse(part[2]),
+            int.parse(part[1]),
+            int.parse(part[0]),
+          );
+          final now = DateTime.now();
+
+          final ageMonths = (now.year - birthDate.year) * 12 + (now.month - birthDate.month);
+
+          final Map<int, List <String>> vaccinesSchedule =
+              {
+                2: ['6-in-1', 'PVC', 'Rotavirus', 'MenB'],
+                4: ['6-in-1', 'PVC','Rotavirus'],
+              }
         });
       }
   }
+  
+
 
 
   @override
