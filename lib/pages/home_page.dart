@@ -8,6 +8,8 @@ import 'package:tinytales/pages/profile_page.dart';
 import 'package:tinytales/pages/tracking_page.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 
+import '../services/notification_service.dart';
+
 class  HomePage extends StatefulWidget {
   const HomePage({super.key, this.onProfileTap});
   final void Function()? onProfileTap;
@@ -23,8 +25,13 @@ class HomePageState extends State<HomePage> {
   int currentPage = 0;
 
   List<Widget> pages =  [
-      Center(
-      child: Text('Welcome back! ' + (FirebaseAuth.instance.currentUser?.email ?? 'Unknown')),
+    Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('Welcome back! ' + (FirebaseAuth.instance.currentUser?.email ?? 'Unknown')),
+        ],
+      ),
     ),
     InsightsPage(),
     TrackingPage(),
@@ -82,6 +89,7 @@ class HomePageState extends State<HomePage> {
                   setState(() {
                     currentPage = index;
                   });
+
                 }
                 }
             ),

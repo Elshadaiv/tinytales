@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tinytales/data/baby_data.dart';
+import 'package:tinytales/services/notification_service.dart';
 
 
 class ImmunisationPassportPage extends StatefulWidget {
@@ -64,7 +65,6 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
                 12:['MMR', 'MenB', 'PVC'],
                 13:['Hib/MenC','PVC'],
               };
-
           recommendedVaccines = [];
           vaccinesSchedule.forEach((month, vaccines)
               {
@@ -73,6 +73,15 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
                     recommendedVaccines = vaccines;
                   }
               });
+
+          if (recommendedVaccines.isNotEmpty)
+          {
+            NotificationService.showNotification(
+              title: "Vaccine Reminder",
+              body: "It's time for ${recommendedVaccines.join(', ')}!",
+
+            );
+            }
         });
       }
   }
@@ -309,7 +318,6 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
                         ),
                         elevation: 6,
                       ),
-//
 
                     );
                     return;
@@ -372,11 +380,10 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
 
               ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                        content: const Text('Ssaved',
+                        content: const Text('Saved',
                             style: TextStyle(
                                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500
                             ),
-
 
                         ),
                       backgroundColor: Colors.green,
@@ -389,7 +396,63 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
                     ),
 
                 );
-              },
+
+              if (babyDob != null)
+              {
+                final parts = babyDob!.split(RegExp(r'[\/\.-]'));
+                final birthDate = DateTime(
+                  int.parse(parts[2]),
+                  int.parse(parts[1]),
+                  int.parse(parts[0]),
+                );
+
+                final now = DateTime.now();
+                final ageMonths = (now.year - birthDate.year) * 12 + (now.month - birthDate.month);
+                final Map<int, List<String>> vaccineSchedule =
+                {
+                  2: ['6-in-1', 'PVC', 'Rotavirus', 'MenB'],
+                  4: ['6-in-1', 'PVC', 'Rotavirus'],
+                  6: ['6-in-1', 'MemB'],
+                  12: ['MMR', 'MenB', 'PVC'],
+                  13: ['Hib/MenC', 'PVC'],
+                };
+
+                int? nextDueMonth;
+                for (final month in vaccineSchedule.keys.toList()
+                  ..sort())
+                {
+                  if (month > ageMonths)
+                  {
+                    nextDueMonth = month;
+                    return;
+                  }
+                }
+
+                if (nextDueMonth != null)
+                {
+                  final nextVaccines = vaccineSchedule[nextDueMonth]!;
+                  final nextDueDate = DateTime(
+                    birthDate.year,
+                    birthDate.month + nextDueMonth,
+                    birthDate.day,
+                  );
+                  final reminderDate = nextDueDate.subtract(
+                      const Duration(days: 3)
+                  );
+                  if (reminderDate.isAfter(now))
+                  {
+                    NotificationService.showNotification(
+                      title: "Upcoming vaccine due! ",
+                      body:
+                      "Your baby’s next vaccines (${nextVaccines.join(
+                          ', ')}"
+                          ") are due on ${nextDueDate.day}/${nextDueDate
+                          .month}/${nextDueDate.year}.",
+                    );
+                  }
+                 }
+              }
+                },
               child: const Text('Save'),
             ),
           ),
