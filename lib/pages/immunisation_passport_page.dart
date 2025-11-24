@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tinytales/data/baby_data.dart';
 import 'package:tinytales/services/notification_service.dart';
+import 'package:tinytales/services/pdf_service.dart';
 
 
 class ImmunisationPassportPage extends StatefulWidget {
@@ -22,6 +23,10 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
     Immunisation(name: 'MMR'),
     Immunisation(name: 'Polio'),
     Immunisation(name: 'MenB'),
+    Immunisation(name: 'Rotavirus'),
+    Immunisation(name: 'PVC'),
+
+
 
   ];
 
@@ -79,7 +84,6 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
             NotificationService.showNotification(
               title: "Vaccine Reminder",
               body: "It's time for ${recommendedVaccines.join(', ')}!",
-
             );
             }
         });
@@ -108,21 +112,7 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
 
       body: Column(
         children: [
-          (recommendedVaccines.isEmpty)
-            ? const SizedBox.shrink()
-          :Padding(
-        padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text( "Reccommended vaccines for age:",
-          style:  TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
-            ),
-          const SizedBox(height: 8,),
-          ...recommendedVaccines.map((v) => Text("• $v")).toList(),
-          ],
-          ),
-          ),
+          const SizedBox(height: 16),
           Expanded(
             child: ListView.builder(
                 itemCount: vaccines.length,
@@ -456,8 +446,40 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
               child: const Text('Save'),
             ),
           ),
+
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20.0),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.picture_as_pdf),
+              label: const Text("Downlaod as PDF"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              onPressed: () async
+                {
+                  final file = await PDFservice.generateImmunisationPDF(
+                      babyId: widget.babyId,
+                      babyName: widget.babyName,
+                  );
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("PDF saved at: ${file.path}"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+
+                }
+
+            )
+          )
         ],
     ),
+
+
       );
 
   }
