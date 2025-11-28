@@ -43,7 +43,7 @@ class TinyTalesApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.purple
       ),
-      home: const AuthPage(),///
+      home: const AuthPage(),//////test
     );
   }
 }
