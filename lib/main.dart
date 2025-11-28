@@ -29,7 +29,7 @@ void main() async {
 
   await androidPlugin?.requestNotificationsPermission();
 
-  BackgroundMusicService.start();/
+  BackgroundMusicService.start();//
   runApp(const TinyTalesApp());
 }
 
