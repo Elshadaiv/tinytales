@@ -7,6 +7,8 @@ gradle-wrapper.jar
 GeneratedPluginRegistrant.java
 .cxx/
 assets/audio/TinyTalesLobbyMusic.mp3
+assets/audio/
+
 
 
 # Remember to never publicly share your keystore.
