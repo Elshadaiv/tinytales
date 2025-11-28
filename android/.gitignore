@@ -6,6 +6,8 @@ gradle-wrapper.jar
 /local.properties
 GeneratedPluginRegistrant.java
 .cxx/
+assets/audio/TinyTalesLobbyMusic.mp3
+
 
 # Remember to never publicly share your keystore.
 # See https://flutter.dev/to/reference-keystore
