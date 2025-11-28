@@ -42,7 +42,6 @@ class HomePageState extends State<HomePage> {
 
   void signUserOut() {
     FirebaseAuth.instance.signOut();
-    BackgroundMusicService.stop();
 
   }
 
