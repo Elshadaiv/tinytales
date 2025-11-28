@@ -48,6 +48,8 @@ dependencies:
   intl: ^0.20.2
   flutter_animate: ^4.5.2
   firebase_database: ^12.1.0
+  audioplayers: ^6.5.1
+
 
 dev_dependencies:
   flutter_test:
@@ -68,7 +70,7 @@ dev_dependencies:
 flutter_icons:
   android: true
   ios: true
-  image_path: "lib/assets/images/Newlogo.png"
+  image_path: "assets/images/Newlogo.png"
 
 
 # For information on the generic Dart part of this file, see the
@@ -76,11 +78,10 @@ flutter_icons:
 
 # The following section is specific to Flutter packages.
 flutter:
-
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/audio/TinyTalesLobbyMusic.mp3
 
   # To add assets to your application, add an assets section, like this:
   # assets:
