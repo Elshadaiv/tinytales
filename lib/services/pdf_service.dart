@@ -10,10 +10,10 @@ import 'package:pdf/widgets.dart' as pw;
 class PDFservice
 {
   static Future<File> generateImmunisationPDF(
-  {
-    required String babyId,
-    required String babyName,
-}) async
+      {
+        required String babyId,
+        required String babyName,
+      }) async
   {
     final babyDoc = await FirebaseFirestore.instance
         .collection('baby_profiles')
@@ -42,9 +42,9 @@ class PDFservice
       final dates = datesList.map((d) => d.toString()).join(', ');
       return
         {
-        'name': name,
-        'dates': dates.isEmpty ? '-' : dates,
-      };
+          'name': name,
+          'dates': dates.isEmpty ? '-' : dates,
+        };
     }).toList();
 
     final Map<String, List<String>> vaccineSchedule =
@@ -71,81 +71,81 @@ class PDFservice
         {
           return
             [
-            pw.Text("$babyName's Immunisation Passport", style: titleStyle),
-            pw.SizedBox(height: 8),
-            pw.Divider(),
-            pw.SizedBox(height: 12),
-            pw.Container(
-              padding: const pw.EdgeInsets.all(10),
-              decoration: pw.BoxDecoration(
-                border: pw.Border.all(color: PdfColors.grey700),
-              ),
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text("Child's details", style: sectionTitleStyle),
-                  pw.SizedBox(height: 8),
-                  _detailRow("Child's name", babyName, labelStyle, valueStyle),
-                  _detailRow("Date of birth", dob, labelStyle, valueStyle),
-                  _detailRow("Gender", gender, labelStyle, valueStyle),
-                  _detailRow("Birth weight", weight, labelStyle, valueStyle),
-                  _detailRow("Birth height", height, labelStyle, valueStyle),
-                  _detailRow("Hospital", hospital, labelStyle, valueStyle),
-                ],
-              ),
-            ),
-            pw.SizedBox(height: 20),
-            pw.Text("Immunisation Schedule", style: sectionTitleStyle),
-            pw.SizedBox(height: 8),
-            ...vaccineSchedule.entries.map((entry) {
-              return pw.Container(
-                margin: const pw.EdgeInsets.only(bottom: 10),
+              pw.Text("$babyName's Immunisation Passport", style: titleStyle),
+              pw.SizedBox(height: 8),
+              pw.Divider(),
+              pw.SizedBox(height: 12),
+              pw.Container(
+                padding: const pw.EdgeInsets.all(10),
                 decoration: pw.BoxDecoration(
-                  border: pw.Border.all(color: PdfColors.grey500),
+                  border: pw.Border.all(color: PdfColors.grey700),
                 ),
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Container(
-                      width: double.infinity,
-                      color: PdfColors.grey300,
-                      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      child: pw.Text(entry.key,
-                          style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
-                    ),
-                    pw.Padding(
-                      padding: const pw.EdgeInsets.all(8.0),
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: entry.value
-                            .map((v) => pw.Bullet(text: v, style: const pw.TextStyle(fontSize: 12)))
-                            .toList(),
-                      ),
-                    ),
+                    pw.Text("Child's details", style: sectionTitleStyle),
+                    pw.SizedBox(height: 8),
+                    _detailRow("Child's name", babyName, labelStyle, valueStyle),
+                    _detailRow("Date of birth", dob, labelStyle, valueStyle),
+                    _detailRow("Gender", gender, labelStyle, valueStyle),
+                    _detailRow("Birth weight", weight, labelStyle, valueStyle),
+                    _detailRow("Birth height", height, labelStyle, valueStyle),
+                    _detailRow("Hospital", hospital, labelStyle, valueStyle),
                   ],
                 ),
-              );
-            }).toList(),
-
-            pw.SizedBox(height: 20),
-
-            pw.Text("Recorded Immunisations", style: sectionTitleStyle),
-            pw.SizedBox(height: 8),
-
-            if (immunisations.isEmpty)
-               pw.Text("No immunisation records have been saved yet.",
-                  style: pw.TextStyle(fontSize: 12))
-            else
-              pw.Table.fromTextArray(
-                headers: ['Vaccine name', 'Dates given'],
-                data: immunisations.map((v) => [v['name']!, v['dates']!]).toList(),
-                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12),
-                cellStyle: const pw.TextStyle(fontSize: 11),
-                cellAlignment: pw.Alignment.centerLeft,
-                border: pw.TableBorder.all(color: PdfColors.grey600),
-                headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
               ),
-          ];
+              pw.SizedBox(height: 20),
+              pw.Text("Immunisation Schedule", style: sectionTitleStyle),
+              pw.SizedBox(height: 8),
+              ...vaccineSchedule.entries.map((entry) {
+                return pw.Container(
+                  margin: const pw.EdgeInsets.only(bottom: 10),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.grey500),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Container(
+                        width: double.infinity,
+                        color: PdfColors.grey300,
+                        padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: pw.Text(entry.key,
+                            style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: entry.value
+                              .map((v) => pw.Bullet(text: v, style: const pw.TextStyle(fontSize: 12)))
+                              .toList(),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+
+              pw.SizedBox(height: 20),
+
+              pw.Text("Recorded Immunisations", style: sectionTitleStyle),
+              pw.SizedBox(height: 8),
+
+              if (immunisations.isEmpty)
+                pw.Text("No immunisation records have been saved yet.",
+                    style: pw.TextStyle(fontSize: 12))
+              else
+                pw.Table.fromTextArray(
+                  headers: ['Vaccine name', 'Dates given'],
+                  data: immunisations.map((v) => [v['name']!, v['dates']!]).toList(),
+                  headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12),
+                  cellStyle: const pw.TextStyle(fontSize: 11),
+                  cellAlignment: pw.Alignment.centerLeft,
+                  border: pw.TableBorder.all(color: PdfColors.grey600),
+                  headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
+                ),
+            ];
         },
       ),
     );
