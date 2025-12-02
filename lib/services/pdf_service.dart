@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -153,6 +154,9 @@ class PDFservice
     final safeName = babyName.replaceAll(' ', '_').replaceAll('/', '_').toLowerCase();
     final file = File("${outputDir.path}/${safeName}_immunisation_passport.pdf");
     await file.writeAsBytes(await pdf.save());
+
+    await OpenFile.open(file.path);
+
     return file;
   }
 
