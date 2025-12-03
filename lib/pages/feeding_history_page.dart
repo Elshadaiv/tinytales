@@ -16,7 +16,7 @@ class FeedingHistoryPage extends StatelessWidget {
 
       backgroundColor: Colors.grey[300],
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding:  EdgeInsets.all(16),
         child: FeedingHistoryList(babyId: babyId),
       ),
     );

@@ -6,7 +6,7 @@ class AddFeedingForm extends StatefulWidget {
   final BuildContext parentContext;
   final Future<void> Function(int amount, DateTime time) onSubmit;
 
-  const AddFeedingForm({
+   AddFeedingForm({
     super.key,
     required this.parentContext,
     required this.onSubmit,
@@ -64,7 +64,7 @@ class _AddFeedingFormState extends State<AddFeedingForm> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+         Text(
           "Add Feeding",
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
@@ -79,10 +79,10 @@ class _AddFeedingFormState extends State<AddFeedingForm> {
 
         ElevatedButton(
           onPressed: _save,
-          child: const Text("Save"),
+          child:  Text("Save"),
         ),
 
-        const SizedBox(height: 20),
+         SizedBox(height: 20),
       ],
     );
   }
