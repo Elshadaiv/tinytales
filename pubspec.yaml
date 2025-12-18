@@ -49,6 +49,8 @@ dependencies:
   flutter_animate: ^4.5.2
   firebase_database: ^12.1.0
   audioplayers: ^6.5.1
+  tflite_flutter: ^0.12.1
+
 
 
 dev_dependencies:
@@ -82,6 +84,8 @@ flutter:
 
   assets:
     - assets/audio/TinyTalesLobbyMusic.mp3
+    - assets/machineLearning/baby_sound_classifier.tflite
+    - assets/machineLearning/labels.text
 
   # To add assets to your application, add an assets section, like this:
   # assets:
