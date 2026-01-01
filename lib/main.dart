@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:tinytales/pages/auth_page.dart';
-import 'package:tinytales/services/backgroundMusicService.dart';
 import 'package:tinytales/services/notification_service.dart';
 import 'services/firebase_options.dart';
 
@@ -29,7 +28,6 @@ void main() async {
 
   await androidPlugin?.requestNotificationsPermission();
 
-  BackgroundMusicService.start();//
   runApp(const TinyTalesApp());
 }
 

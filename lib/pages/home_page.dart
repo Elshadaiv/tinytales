@@ -8,7 +8,6 @@ import 'package:tinytales/pages/profile_page.dart';
 import 'package:tinytales/pages/tracking_page.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 
-import '../services/backgroundMusicService.dart';
 import '../services/notification_service.dart';
 
 class  HomePage extends StatefulWidget {
