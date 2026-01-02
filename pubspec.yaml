@@ -53,6 +53,7 @@ dependencies:
 
 
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -83,7 +84,6 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/audio/TinyTalesLobbyMusic.mp3
     - assets/machineLearning/baby_sound_classifier.tflite
     - assets/machineLearning/labels.text
 
