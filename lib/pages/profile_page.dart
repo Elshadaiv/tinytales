@@ -175,75 +175,139 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
 
   }
 
-  void createBabyProfile() // NEED TO DO ERROR HANDLING + DELETE + UPDATE METHODS FOR BABY
-  {
-    final BuildContext stateContext = this.context;
-    showDialog(
-    context: stateContext,
-    builder: (BuildContext) => AlertDialog (
-      title: Text("Baby Profile"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: newBabyNameController,
-                decoration: const InputDecoration(
-                    labelText: "Name"
-                ),
-              ),
-              TextField(
-                controller: newBabyGenderController,
-                decoration: const InputDecoration(
-                    labelText: "Gender"
-                ),
-              ),
+    void createBabyProfile() // NEED TO DO ERROR HANDLING + DELETE + UPDATE METHODS FOR BABY
+    {
+      final BuildContext stateContext = this.context;
+      showDialog(
+        context: stateContext,
+        builder: (BuildContext)
+        {
+          return StatefulBuilder(
+            builder: (context, setDialogState) => AlertDialog(
+              title: Text("Baby Profile"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: newBabyNameController,
+                      decoration: const InputDecoration(
+                          labelText: "Name"
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Row(
+                        children: [
+                          Text(
+                            "Gender",
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          ),
+                          Spacer(),
 
-              TextField(
-                controller: newBabyDOBController,
-                decoration: const InputDecoration(
-                    labelText: "Date of Birth"
+                          GestureDetector(
+                            onTap: ()
+                            {
+                              setDialogState(()
+                              {
+                                newBabyGenderController.text = "Male";
+                              });
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: newBabyGenderController.text == "Male"
+                                    ? Colors.purpleAccent
+                                    : Colors.grey[300],
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                "Male",
+                                style: TextStyle(
+                                  color: newBabyGenderController.text == "Male"
+                                      ? Colors.white
+                                      : Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          SizedBox(width: 10),
+
+                          GestureDetector(
+                            onTap: ()
+                            {
+                              setDialogState(()
+                              {
+                                newBabyGenderController.text = "Female";
+                              });
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: newBabyGenderController.text == "Female"
+                                    ? Colors.purpleAccent
+                                    : Colors.grey[300],
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                "Female",
+                                style: TextStyle(
+                                  color: newBabyGenderController.text == "Female"
+                                      ? Colors.white
+                                      : Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    TextField(
+                      controller: newBabyDOBController,
+                      decoration: const InputDecoration(
+                          labelText: "Date of Birth"
+                      ),
+                    ),
+                    TextField(
+                      controller: newBabyWeightController,
+                      decoration: const InputDecoration(
+                          labelText: "Weight"
+                      ),
+                    ),
+                    TextField(
+                      controller: newBabyHeightController,
+                      decoration: const InputDecoration(
+                          labelText: "Height (Cms)"
+                      ),
+                    ),
+
+                    TextField(
+                      controller: newBabyHospitalController,
+                      decoration: const InputDecoration(
+                          labelText: "Hospital"
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              TextField(
-                controller: newBabyWeightController,
-                decoration: const InputDecoration(
-                    labelText: "Weight"
+              actions: [
+                MaterialButton(
+                  onPressed: cancel,
+                  child: Text("Cancel"),
                 ),
-              ),
-              TextField(
-                controller: newBabyHeightController,
-                decoration: const InputDecoration(
-                    labelText: "Height (Cms)"
+                MaterialButton(
+                  onPressed: saveBabyProfile,
+                  child: Text("Upload"),
                 ),
-              ),
-
-              TextField(
-                controller: newBabyHospitalController,
-                decoration: const InputDecoration(
-                    labelText: "Hospital"
-                ),
-              ),
-            ],
-          ),
-        ),
-      actions: [
-        MaterialButton(
-          onPressed: cancel,
-          child: Text("Cancel"),
-        ),
-        MaterialButton(
-          onPressed: saveBabyProfile,
-          child: Text("Upload"),
-        ),
-      ],
-    ),
-    );
-  }
-
-
-
-  void deleteBaby() async
+              ],
+            ),
+          );
+        },
+      );
+    }
+    void deleteBaby() async
   {
     final snapshot = await FirebaseFirestore.instance
         .collection('baby_profiles')
