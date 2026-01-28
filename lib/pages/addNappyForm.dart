@@ -63,11 +63,11 @@ class _AddNappyFormState extends State<AddNappyForm>
         ),
         TextField(
           controller: colorController,
-          decoration:  InputDecoration(labelText: "Colour (optional)"),
+          decoration:  InputDecoration(labelText: "Colour "),
         ),
         TextField(
           controller: notesController,
-          decoration:  InputDecoration(labelText: "Note (optional)"),
+          decoration:  InputDecoration(labelText: "Note "),
         ),
 
          SizedBox(height: 10),
