@@ -215,20 +215,23 @@ class HomePageState extends State<HomePage> {
 
       final sleep = await _latestLog(
         path: "users/$userId/tracking/$babyId/sleeps",
+        timekey: "endTime",
         labelBuilder: (data)
         {
-          final duration = (data["duration"] ?? "").toString();
-          final time = _formatIsoTime(data["time"]);
+          final mins = data["durationMinutes"] is int
+              ? data["durationMinutes"]
+              : int.tryParse(data["durationMinutes"].toString()) ?? 0;
 
-          if (duration.isNotEmpty && time.isNotEmpty)
-          {
-            return "$duration at $time";
-          }
-          if (duration.isNotEmpty)
-          {
-            return duration;
-          }
-          return time;
+          final h = mins ~/ 60;
+          final m = mins % 60;
+
+          if (h == 0)
+            return "${m}m";
+
+          if (m == 0)
+            return "${h}h";
+
+          return "${h}h ${m}m";
         },
       );
       setState(() {
@@ -250,6 +253,7 @@ class HomePageState extends State<HomePage> {
       {
         required String path,
         required String Function(Map<String, dynamic> data) labelBuilder,
+        String timekey = "time",
       }) async
   {
     final snapshot = await db.child(path).get();
@@ -281,7 +285,7 @@ class HomePageState extends State<HomePage> {
     final entries = raw.values
         .where((e) => e != null)
         .map((e) => Map<String, dynamic>.from(e))
-        .where((e) => e["time"] != null)
+        .where((e) => e[timekey] != null)
         .toList();
 
     if (entries.isEmpty)
@@ -291,8 +295,8 @@ class HomePageState extends State<HomePage> {
 
     entries.sort((a, b)
     {
-      final at = DateTime.tryParse(a["time"].toString()) ?? DateTime(1970);
-      final bt = DateTime.tryParse(b["time"].toString()) ?? DateTime(1970);
+      final at = DateTime.tryParse(a[timekey].toString()) ?? DateTime(1970);
+      final bt = DateTime.tryParse(b[timekey].toString()) ?? DateTime(1970);
       return at.compareTo(bt);
     });
 
@@ -318,6 +322,21 @@ class HomePageState extends State<HomePage> {
     final m = dt.minute.toString().padLeft(2, "0");
     return "$h:$m";
   }
+
+  String _formatDurationMinutes(int minutes)
+  {
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+
+    if (h == 0)
+      return "${m}m";
+
+    if (m == 0)
+      return "${h}h";
+
+    return "${h}h ${m}m";
+  }
+
 
   Widget _summary(String title, String value, IconData icon) {
     return Container(
