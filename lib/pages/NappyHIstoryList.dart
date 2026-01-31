@@ -45,7 +45,7 @@ class NappyHistoryList extends StatelessWidget {
           {
             "type": e["type"],
             "time": e["time"],
-            "colour": e["colour"] ?? "",
+            "colour": e["color"] ?? "",
             "notes": e["notes"] ?? "",
           }).toList();
 

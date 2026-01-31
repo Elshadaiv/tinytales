@@ -6,6 +6,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tinytales/pages/addFeedingForm.dart';
 import 'package:tinytales/pages/addNappyForm.dart';
 import 'package:tinytales/pages/NappyHIstoryList.dart';
+import 'package:tinytales/pages/addSleepForm.dart';
+
 
 import 'feeding_history_page.dart';
 
@@ -95,6 +97,50 @@ class _TrackingPageState extends State<TrackingPage> {
     });
   }
 
+
+  Future<void> addSleep({
+    required String babyId,
+    required DateTime startTime,
+    required DateTime endTime,
+    String? notes,
+}) async
+  {
+    final userId = _auth.currentUser!.uid;
+
+    final duration = endTime.difference(startTime);
+    final durationMins = duration.inMinutes;
+
+    final ref = _db.child("users/$userId/tracking/$babyId/sleeps").push();
+
+
+    await ref.set({
+      "startTime": startTime.toIso8601String(),
+      "endTime": endTime.toIso8601String(),
+      "durationMinutes": durationMins,
+      "notes": notes ?? "",
+    });
+  }
+
+  String _formatTime(DateTime time)
+  {
+    return "${time.hour}:${time.minute.toString().padLeft(2, '0')}";
+  }
+
+  String _formatDurationMinutes(int minutes)
+  {
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+
+    if (h == 0)
+      return "${m}m";
+
+    if (m == 0)
+      return "${h}h";
+
+    return "${h}h ${m}m";
+  }
+
+
   void _openAddFeeding(BuildContext context)
   {
     if (selectedBabyId == null) return;
@@ -170,6 +216,46 @@ class _TrackingPageState extends State<TrackingPage> {
   }
 
 
+  void _openAddSleep(BuildContext context)
+  {
+    if(selectedBabyId == null)
+      return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+
+      builder: (sheetContext)
+      {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: AddSleepForm(
+            parentContext: context,
+            onSubmit: (startTime, endTime, notes)
+            async
+            {
+              await addSleep(
+                babyId: selectedBabyId!,
+                startTime: startTime,
+                endTime: endTime,
+                notes: notes,
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+
 
   @override
   Widget build(BuildContext context)
@@ -188,6 +274,7 @@ class _TrackingPageState extends State<TrackingPage> {
       appBar: AppBar(backgroundColor: Colors.grey[300]),
       body: Padding(
         padding:  EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -470,9 +557,135 @@ class _TrackingPageState extends State<TrackingPage> {
               ),
             ),
              SizedBox(height: 20),
+
+            Text(
+              "Sleep",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+
+            SizedBox(height: 10),
+
+            Container(
+              padding:  EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow:  [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Last Sleep:",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+
+                      StreamBuilder(
+                        stream: _db
+                            .child(
+                            "users/${_auth.currentUser!.uid}/tracking/$selectedBabyId/sleeps")
+                            .onValue,
+
+                        builder: (context, snapshot)
+                        {
+                          if (!snapshot.hasData || snapshot.data?.snapshot.value == null)
+                          {
+                            return Text("NO ENTRIES", style: TextStyle(color: Colors.grey[700]));
+                          }
+                          final data = snapshot.data!.snapshot.value;
+
+                          Map<dynamic, dynamic> raw =
+                          {
+                          };
+                          if (data is List)
+                          {
+                            raw =
+                            {
+                              for (int i = 0; i < data.length; i++)
+                                if (data[i] != null) i: data[i]
+                            };
+                          }
+                          else if (data is Map)
+                          {
+                            raw = data;
+                          }
+
+                          final entries = raw.values.map((e) =>
+                          {
+                            "startTime": e["startTime"],
+                            "endTime": e["endTime"],
+                            "durationMinutes": e["durationMinutes"] ?? 0,
+                          })
+                              .where((e) => e["endTime"] != null)
+                              .toList();
+
+                          if (entries.isEmpty)
+                          {
+                            return Text("NO ENTRIES", style: TextStyle(color: Colors.grey[700]));
+                          }
+
+                          entries.sort((a, b) => DateTime.parse(a["endTime"]!)
+                              .compareTo(DateTime.parse(b["endTime"]!)));
+
+                          final latest = entries.last;
+                          final endString = latest["endTime"]!;
+                          final endTime = DateTime.tryParse(endString);
+
+                          final durationMinutes = latest["durationMinutes"] is int
+                              ? latest["durationMinutes"]
+                              : int.tryParse(latest["durationMinutes"].toString()) ?? 0;
+
+                          if (endTime == null)
+                          {
+                            return Text("Unknown", style: TextStyle(color: Colors.grey[700]));
+                          }
+
+                          final formattedEnd = _formatTime(endTime);
+                          final formattedDuration = _formatDurationMinutes(durationMinutes);
+
+                          return Text(
+                            "$formattedDuration (end $formattedEnd)",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 12),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _openAddSleep(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                      ),
+                      child: Text("Add Sleep"),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
+    ),
     );
   }
 }
