@@ -7,6 +7,7 @@ import 'package:tinytales/pages/addFeedingForm.dart';
 import 'package:tinytales/pages/addNappyForm.dart';
 import 'package:tinytales/pages/NappyHIstoryList.dart';
 import 'package:tinytales/pages/addSleepForm.dart';
+import 'package:tinytales/pages/SleepHistoryList.dart';
 
 
 import 'feeding_history_page.dart';
@@ -680,6 +681,45 @@ class _TrackingPageState extends State<TrackingPage> {
                     ),
                   ),
                 ],
+              ),
+            ),
+            SizedBox(height: 20),
+
+            GestureDetector(
+              onTap: ()
+              {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SleepHistoryList(babyId: selectedBabyId!),
+                  ),
+                );
+              },
+              child: Container(
+                padding:  EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 6,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "View Sleep History",
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey[700]),
+                  ],
+                ),
               ),
             ),
           ],
