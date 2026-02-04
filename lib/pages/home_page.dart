@@ -32,6 +32,7 @@ class HomePageState extends State<HomePage> {
   String lastFeed = "";
   String lastSleep = "";
   String lastNappy = "";
+  String lastTemp = "";
 
   List<Map<String, String>> babies = [];
   String? selectedBabyId;
@@ -94,7 +95,7 @@ class HomePageState extends State<HomePage> {
                 children: [
                   _summary("Last feed", lastFeed, Icons.restaurant),
                   _summary("Last sleep", lastSleep, Icons.bedtime),
-                  _summary("Milestones", "//This will show what level there at in the milestone", Icons.flag),
+                  _summary("Temperature", lastTemp, Icons.thermostat),
                   _summary("Last Nappy",lastNappy,  Icons.baby_changing_station),
                 ],
               ),
@@ -170,6 +171,8 @@ class HomePageState extends State<HomePage> {
         setState(() {
           lastFeed = "No Profile made";
           lastSleep = "No Profile made";
+          lastNappy = "No Profile made";
+          lastTemp = "No Profile made";
         });
         return;
       }
@@ -234,10 +237,31 @@ class HomePageState extends State<HomePage> {
           return "${h}h ${m}m";
         },
       );
+
+      final temp = await _latestLog(
+        path: "users/$userId/tracking/$babyId/temperatures",
+        labelBuilder: (data)
+        {
+          final value = (data["value"] ?? "").toString();
+          final time = _formatIsoTime(data["time"]);
+
+          if (value.isNotEmpty && time.isNotEmpty)
+          {
+            return "$value °C • $time";
+          }
+          if (value.isNotEmpty)
+          {
+            return "$value °C";
+          }
+          return time;
+        },
+      );
+
       setState(() {
         lastFeed = feed ?? "Not recorded";
         lastSleep = sleep ?? "Not recorded";
         lastNappy = nappy ?? "Not recorded";
+        lastTemp = temp ?? "Not recorded";
       });
     }
     catch (e)
