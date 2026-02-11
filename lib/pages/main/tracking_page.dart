@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'package:tinytales/pages/addFeedingForm.dart';
-import 'package:tinytales/pages/addNappyForm.dart';
-import 'package:tinytales/pages/NappyHIstoryList.dart';
-import 'package:tinytales/pages/addSleepForm.dart';
-import 'package:tinytales/pages/SleepHistoryList.dart';
+import 'package:tinytales/pages/forms/addFeedingForm.dart';
+import 'package:tinytales/pages/forms/addNappyForm.dart';
+import 'package:tinytales/pages/history/NappyHIstoryList.dart';
+import 'package:tinytales/pages/forms/addSleepForm.dart';
+import 'package:tinytales/pages/history/SleepHistoryList.dart';
 
-import 'package:tinytales/pages/addTemperatureForm.dart';
-import 'package:tinytales/pages/TemperatureHistoryList.dart';
+import 'package:tinytales/pages/forms/addTemperatureForm.dart';
+import 'package:tinytales/pages/history/TemperatureHistoryList.dart';
 
-import 'feeding_history_page.dart';
+import '../history/feeding_history_page.dart';
 
 class TrackingPage extends StatefulWidget {
    TrackingPage({super.key});

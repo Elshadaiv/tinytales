@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tinytales/data/baby_data.dart';
-import 'package:tinytales/pages/baby_profile_page.dart';
+import 'package:tinytales/pages/baby/baby_profile_page.dart';
 import 'package:tinytales/components/my_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:tinytales/pages/immunisation_passport_page.dart';
-import 'package:tinytales/services/firestore.dart';
+import 'package:tinytales/pages/immunisation/immunisation_passport_page.dart';
+import 'package:tinytales/pages/database/firestore.dart';
 
 
 

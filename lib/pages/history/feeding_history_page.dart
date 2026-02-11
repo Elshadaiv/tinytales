@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tinytales/services//feedingHistoryList.dart';
+import 'package:tinytales/pages/history/feedingHistoryList.dart';
 
 class FeedingHistoryPage extends StatelessWidget {
   final String babyId;

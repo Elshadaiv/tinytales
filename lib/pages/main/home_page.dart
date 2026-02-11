@@ -4,12 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:tinytales/pages/community_page.dart';
-import 'package:tinytales/pages/insights_page.dart';
-import 'package:tinytales/pages/profile_page.dart';
-import 'package:tinytales/pages/tracking_page.dart';
+import 'package:tinytales/pages/main/community_page.dart';
+import 'package:tinytales/pages/main/insights_page.dart';
+import 'package:tinytales/pages/main/profile_page.dart';
+import 'package:tinytales/pages/main/tracking_page.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
-import 'package:tinytales/pages/milestone_page.dart';
+import 'package:tinytales/pages/main/milestone_page.dart';
 
 
 
