@@ -9,6 +9,8 @@ import 'package:tinytales/pages/NappyHIstoryList.dart';
 import 'package:tinytales/pages/addSleepForm.dart';
 import 'package:tinytales/pages/SleepHistoryList.dart';
 
+import 'package:tinytales/pages/addTemperatureForm.dart';
+import 'package:tinytales/pages/TemperatureHistoryList.dart';
 
 import 'feeding_history_page.dart';
 
@@ -120,6 +122,26 @@ class _TrackingPageState extends State<TrackingPage> {
       "durationMinutes": durationMins,
       "notes": notes ?? "",
     });
+  }
+
+  Future<void> addTemperature({
+    required String babyId,
+    required double value,
+    required DateTime time,
+    String unit = "C",
+  }) async
+  {
+    final userId = _auth.currentUser!.uid;
+    final ref = _db.child("users/$userId/tracking/$babyId/temperatures").push();
+
+
+    await ref.set(
+        {
+          "value": value,
+          "unit": unit,
+          "time": time.toIso8601String(),
+        });
+
   }
 
   String _formatTime(DateTime time)
@@ -255,6 +277,45 @@ class _TrackingPageState extends State<TrackingPage> {
       },
     );
   }
+
+
+
+  void _openAddTemperature(BuildContext context)
+  {
+    if (selectedBabyId == null)
+    {
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext)
+      {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+            left: 20, right: 20, top: 20,
+          ),
+          child: AddTemperatureForm(
+            parentContext: context,
+            onSubmit: (value, time)
+            async
+            {
+              await addTemperature(
+                babyId: selectedBabyId!, value: value,
+                time: time,
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
 
 
 
@@ -714,6 +775,176 @@ class _TrackingPageState extends State<TrackingPage> {
                   children: [
                     Text(
                       "View Sleep History",
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey[700]),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+
+            Text(
+              "Temperature",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+
+            SizedBox(height: 10),
+
+            Container(
+              padding:  EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6, offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Last Temperature:",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+
+                      StreamBuilder(
+                        stream: _db
+                            .child(
+                            "users/${_auth.currentUser!.uid}/tracking/$selectedBabyId/temperatures")
+                            .onValue,
+                        builder: (context, snapshot)
+                        {
+                          if (!snapshot.hasData || snapshot.data?.snapshot.value == null)
+                          {
+                            return Text("no entries", style: TextStyle(color: Colors.grey[700]));
+                          }
+
+                          final data = snapshot.data!.snapshot.value;
+
+                          Map<dynamic, dynamic> raw =
+                          {
+                          };
+
+                          if (data is List)
+                          {
+                            raw =
+                            {
+                              for (int i = 0; i < data.length; i++)
+                                if (data[i] != null) i: data[i]
+
+                            };
+                          }
+                          else if (data is Map)
+                          {
+                            raw = data;
+                          }
+
+                          final entries = raw.values.map((e) =>
+                          {
+                            "value": e["value"],
+                            "unit": e["unit"] ?? "C",
+                            "time": e["time"],
+                          })
+                              .where((e) => e["time"] != null)
+                              .toList();
+
+                          if (entries.isEmpty)
+                          {
+                            return Text("no entries", style: TextStyle(color: Colors.grey[700]));
+                          }
+
+                          entries.sort((a, b) => DateTime.parse(a["time"]!)
+                              .compareTo(DateTime.parse(b["time"]!)));
+
+                          final latest = entries.last;
+
+                          final value = latest["value"];
+                          final unit = latest["unit"] ?? "C";
+
+                          final timeString = latest["time"]!;
+                          final time = DateTime.tryParse(timeString);
+
+                          final formatted = time != null ? "${time.hour}:${time.minute.toString().padLeft(2, '0')}" : "";
+
+                          if (formatted.isNotEmpty)
+                          {
+                            return Text(
+                              "$value °$unit at $formatted",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                            );
+                          }
+                          return Text(
+                            "$value °$unit",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 12),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _openAddTemperature(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                      ),
+                      child: Text("Add Temperature"),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            GestureDetector(
+              onTap: ()
+              {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TemperatureHistoryList(babyId: selectedBabyId!),
+                  ),
+                );
+              },
+              child: Container(
+                padding:  EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow:  [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 6,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "View Temperature History",
                       style: TextStyle(
                           fontSize: 16, fontWeight: FontWeight.w600),
                     ),
