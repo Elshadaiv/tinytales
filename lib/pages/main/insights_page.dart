@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tinytales/services/cry_detection.dart';
+import 'package:tinytales/pages/machinelearning/cry_detection.dart';
 
 
 class InsightsPage extends StatefulWidget
