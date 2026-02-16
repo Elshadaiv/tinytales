@@ -34,18 +34,37 @@ class _InsightsPageState extends State<InsightsPage>
 
     try
     {
-      final result = await cry_Detection().predictCryFromAsset(demoAssetPath);
+      final pairs = await cry_Detection().predictProbFromAsset(demoAssetPath);
 
       if (!mounted)
       {
         return;
       }
 
+      if(pairs.isEmpty)
+        {
       setState(()
       {
         isRunning = false;
         title = "Result";
-        body = result.toString();
+        body = "no result";
+      });
+      return;
+    }
+
+      String text = "";
+
+      for(final p in pairs)
+        {
+          final label = p["label"].toString();
+          final percent = p["percent"].toString();
+          text = "$text$label: $percent%\n";
+        }
+      setState(()
+      {
+        isRunning = false;
+        title = " Model Probabilities";
+        body = text.trim();
       });
     }
     catch (e)

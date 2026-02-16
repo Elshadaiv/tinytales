@@ -65,7 +65,36 @@ class cry_Detection
   }
 
 
+  Future<List<Map<String, dynamic>>> predictProbFromAsset(String assetPath) async
+  {
+    final File tempFile = await _assetToTempFile(assetPath);
+    return predictProb(tempFile);
+  }
   Future<String> predictCry(File spectrogramImage) async
+  {
+    final pairs = await predictProb(spectrogramImage);
+
+    if (pairs.isEmpty) {
+      return ("Error");
+    }
+
+    final top2 = pairs.take(2).toList();
+
+    final String l0 = top2[0]["label"].toString();
+    final int p0 = top2[0]["percent"] as int;
+
+    String out = "$l0 ($p0%)";
+
+    if (top2.length > 1) {
+      final String l1 = top2[1]["label"].toString();
+      final int p1 = top2[1]["percent"] as int;
+      out = "$out, $l1 ($p1%)";
+    }
+
+    return out;
+  }
+
+  Future<List<Map<String, dynamic>>> predictProb(File spectrogramImage) async
   {
     if (_interpreter == null)
     {
@@ -90,20 +119,20 @@ class cry_Detection
     final input = List.generate(
       1,
           (_) => List.generate(
-        inputSize,
-            (y) => List.generate(
-          inputSize,
-              (x)
-          {
-            final pixel = resized.getPixel(x, y);
-            final r = pixel.r / 255.0;
-            final g = pixel.g / 255.0;
-            final b = pixel.b / 255.0;
-            final gray = (0.299 * r + 0.587 * g + 0.114 * b);
-            return [gray, gray, gray];
-          },
-        ),
-      ),
+            inputSize,
+                (y) => List.generate(
+                  inputSize,
+                      (x)
+                  {
+                    final pixel = resized.getPixel(x, y);
+                    final r = pixel.r / 255.0;
+                    final g = pixel.g / 255.0;
+                    final b = pixel.b / 255.0;
+                    final gray = (0.299 * r + 0.587 * g + 0.114 * b);
+                    return [gray, gray, gray];
+                  },
+                ),
+          ),
     );
 
     final int numClasses = _interpreter!.getOutputTensor(0).shape[1];
@@ -113,23 +142,21 @@ class cry_Detection
 
     final prediction = output[0];
 
-    final pairs = List.generate(prediction.length, (i) => {"i": i, "s": prediction[i]},
+    final pairs = List.generate(prediction.length, (i) {
+      final label = i < _labels.length ? _labels[i] : "unknown";
+      final score = prediction[i] is double
+          ? prediction[i]
+          : (prediction[i] as num).toDouble();
+      return
+        {
+          "label": label,
+          "score": score,
+          "percent": (score * 100).round(),
+        };
+    },
     );
 
-    pairs.sort((a, b) => (b["s"] as double).compareTo(a["s"] as double));
-
-    final top2 = pairs.take(2).toList();
-    final int i0 = top2[0]["i"] as int;
-    final double s0 = top2[0]["s"] as double;
-    final String l0 = i0 < _labels.length ? _labels[i0] : "/";
-    final int p0 = (s0 * 100).round();
-
-    final int i1 = top2[1]["i"] as int;
-    final double s1 = top2[1]["s"] as double;
-    final String l1 = i1 < _labels.length ? _labels[i1] : "/";
-    final int p1 = (s1 * 100).round();
-
-
-    return "$l0 ($p0%), $l1 ($p1%)";
+    pairs.sort((a, b) => (b["score"] as double).compareTo(a["score"] as double));
+    return pairs;
   }
 }
