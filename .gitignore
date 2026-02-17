@@ -43,3 +43,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+
+cat >> .gitignore << 'EOF'
+machinelearning/venv/
+machinelearning/.venv/
+machinelearning/miniconda.sh
+__pycache__/
+*.pyc
+.DS_Store
+EOF
