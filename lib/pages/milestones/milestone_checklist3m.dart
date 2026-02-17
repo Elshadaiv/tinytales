@@ -26,7 +26,7 @@ class _MilestoneCheckList2mState extends State<MilestoneCheckList2m>
   {
   };
 
-  final String docId = "3_months";
+  final String docId = "2_months";
 
   final List<Map<String, dynamic>> sections =
   [
