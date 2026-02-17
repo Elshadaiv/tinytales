@@ -3,21 +3,21 @@ import 'package:flutter/material.dart';
 
 
 
-class MilestoneCheckList3m extends StatefulWidget {
+class MilestoneCheckList6m extends StatefulWidget {
   final String babyId;
 
-  MilestoneCheckList3m({
+  MilestoneCheckList6m({
     super.key,
     required this.babyId,
   });
 
 
   @override
-  State<MilestoneCheckList3m> createState() => _MilestoneCheckList3mState();
+  State<MilestoneCheckList6m> createState() => _MilestoneCheckList6mState();
 
 }
 
-class _MilestoneCheckList3mState extends State<MilestoneCheckList3m>
+class _MilestoneCheckList6mState extends State<MilestoneCheckList6m>
 {
   bool _loading = true;
   bool _saving = false;
@@ -26,53 +26,53 @@ class _MilestoneCheckList3mState extends State<MilestoneCheckList3m>
   {
   };
 
-  final String docId = "3_months";
+  final String docId = "6_months";
 
   final List<Map<String, dynamic>> sections =
   [
     {
       "title": "Motor skills",
       "items": [
-        {"id": "lift_chest_tummy", "text": "Lift their chest up while lying on their tummy"},
-        {"id": "head_upright_held", "text": "Keep their head in an upright position if they are being held"},
-        {"id": "track_past_middle", "text": "Move their eyes to track an object moved past the middle of their body"},
-        {"id": "hold_rattle_brief", "text": "Hold a rattle or toy for a brief period"},
-        {"id": "hands_loose_half_time", "text": "Have their hands loose and not in fists for about half of the time"},
+        {"id": "sit_with_support", "text": "Be able to sit with support"},
+        {"id": "roll_back_to_front", "text": "Roll their body from back to front"},
+        {"id": "move_hand_to_hand", "text": "Be able to move things from 1 hand to the other"},
       ],
     },
     {
       "title": "Communication & hearing",
       "items": [
-        {"id": "look_at_talker", "text": "Look at people who are talking"},
-        {"id": "respond_to_voice", "text": "Respond to your voice"},
-        {"id": "start_cooing", "text": "Start making cooing noises"},
+        {"id": "babble_sounds", "text": "Make babbling sounds such as 'baba' and 'gagaga'"},
+        {"id": "turn_to_new_sounds", "text": "Turn and look towards new sounds and noises"},
+        {"id": "look_when_people_enter", "text": "Turn and look towards people when they enter the room"},
+        {"id": "enjoy_back_and_forth", "text": "Enjoy talking back and forth with you using different cooing and babble noises"},
       ],
     },
     {
       "title": "Social & emotional",
       "items": [
-        {"id": "smile_back", "text": "Smile back when you smile at them"},
-        {"id": "enjoy_chat_sing", "text": "Enjoy when you chat and sing to them"},
-        {"id": "more_alert", "text": "Become more alert"},
-        {"id": "awake_longer", "text": "Be awake for longer"},
-        {"id": "more_interested_world", "text": "Be more interested in the world around them"},
-        {"id": "soothed_picked_up", "text": "Be soothed by being picked up"},
+        {"id": "prefer_particular_person", "text": "Show a preference for a particular person"},
+        {"id": "upset_caregiver_not_seen", "text": "Get upset when they cannot see their main caregiver"},
+        {"id": "recognise_familiar_faces", "text": "Recognise familiar faces"},
+        {"id": "react_tone_of_voice", "text": "React to different tones of voice"},
+        {"id": "smile_more_often", "text": "Smile more often, especially at their parents or main caregiver"},
+        {"id": "hold_bottle", "text": "Try to hold their bottle while drinking"},
       ],
     },
     {
       "title": "Problem solving, learning & understanding",
       "items": [
-        {"id": "follow_up_down", "text": "Follow something moving up or down with their eyes"},
+        {"id": "look_floor_drop_toy", "text": "Look to the floor when they drop a toy"},
       ],
     },
   ];
 
   @override
-    void initState()
+  void initState()
   {
     super.initState();
     _load();
   }
+
   Future<void> _load() async
   {
     try
@@ -95,7 +95,7 @@ class _MilestoneCheckList3mState extends State<MilestoneCheckList3m>
         }
       }
     }
-    catch(e)
+    catch (e)
     {
     }
 
@@ -127,7 +127,6 @@ class _MilestoneCheckList3mState extends State<MilestoneCheckList3m>
         SetOptions(merge: true),
       );
     }
-
     catch (e)
     {
     }
@@ -179,7 +178,7 @@ class _MilestoneCheckList3mState extends State<MilestoneCheckList3m>
       backgroundColor: Colors.grey[300],
       appBar: AppBar(
         backgroundColor: Colors.grey[300],
-        title: Text("3 Months Milestones"),
+        title: Text("6 Months Milestones"),
       ),
       body: _loading
           ? Center(child: CircularProgressIndicator(color: Colors.purple))
