@@ -3,6 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tinytales/pages/milestones/milestone_checklist3m.dart';
 import 'package:tinytales/pages/milestones/milestone_checklist6m.dart';
+import 'package:tinytales/pages/milestones/milestone_checklist9m.dart';
+import '../milestones/milestone_checklist12m.dart';
+
 
 
 
@@ -203,6 +206,27 @@ class _milestone_pageState extends State<milestone_page>
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => MilestoneCheckList6m(babyId: selectedBabyId!),
+                                ),
+                              );
+                            }
+
+                            else if (index == 2)
+                            {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => MilestoneCheckList9m(babyId: selectedBabyId!),
+                                ),
+                              );
+                            }
+
+
+                            else if (index == 3)
+                            {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => MilestoneCheckList12m(babyId: selectedBabyId!),
                                 ),
                               );
                             }
