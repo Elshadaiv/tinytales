@@ -49,6 +49,8 @@ dependencies:
   firebase_database: ^12.1.0
   tflite_flutter: ^0.12.1
   flutter_card_swiper: ^7.2.0
+  video_player: ^2.10.1
+  chewie: ^1.13.0
 
 
 

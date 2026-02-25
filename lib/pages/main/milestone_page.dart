@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:tinytales/pages/milestones/milestone_checklist3m.dart';
 import 'package:tinytales/pages/milestones/milestone_checklist6m.dart';
 import 'package:tinytales/pages/milestones/milestone_checklist9m.dart';
@@ -22,6 +23,12 @@ class _milestone_pageState extends State<milestone_page>
   final auth = FirebaseAuth.instance;
 
   final int total3MonthsItems = 15;
+  final int total6MonthsItems = 14;
+  final int total9MonthsItems = 11;
+  final int total12MonthsItems = 11;
+
+
+  bool showVideos = false;
 
   String? selectedBabyId;
   List<Map<String, dynamic>> babies = [
@@ -163,8 +170,67 @@ class _milestone_pageState extends State<milestone_page>
                       ),
                     ],
                   ),
-                  child: Text("No baby profile found."),
+                    child: Text("No baby profile found."),
                 ),
+
+                    if (selectedBabyId != null)
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 6,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: Text(
+                            "Need Help?",
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          ),
+
+                          ElevatedButton(
+                            onPressed:()
+                            {
+                              setState(() {
+                                showVideos = !showVideos;
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+                            child: Text(showVideos ? "Hide" : "Videos"),
+                          ),
+                        ],
+                      ),
+
+                      if (showVideos) ...[
+                        SizedBox(height: 12,),
+
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration:  BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Text(
+                            "4-6 Months",
+                                style: TextStyle(color: Colors.black54),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              SizedBox(height: 14),
 
               Expanded(
                 child: Center(
@@ -177,6 +243,9 @@ class _milestone_pageState extends State<milestone_page>
                       {
                         final item = milestones[index];
                         final bool ThreeMonths = index == 0;
+                        final bool SixMonths = index == 1;
+                        final bool NineMonths = index == 2;
+                        final bool TwelveMonths = index == 3;
 
 
                         return GestureDetector(
@@ -304,7 +373,169 @@ class _milestone_pageState extends State<milestone_page>
                             },
                           ),
                         ),
-                                Expanded(
+                                    if (SixMonths)
+                                      Padding(
+                                        padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+                                        child: StreamBuilder<DocumentSnapshot>
+                                          (
+                                          stream: FirebaseFirestore.instance
+                                              .collection("baby_profiles")
+                                              .doc(selectedBabyId)
+                                              .collection("milestones")
+                                              .doc("6_months")
+                                              .snapshots(),
+                                          builder: (context, snapshot)
+                                          {
+                                            int done = 0;
+                                            final int totalItems = total6MonthsItems;
+
+                                            if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists)
+                                            {
+                                              final data = snapshot.data!.data() as Map<String, dynamic>? ?? {
+
+                                              };
+                                              final raw = data["completed"];
+                                              if (raw is Map)
+                                              {
+                                                done = raw.values.where((v) => v == true).length;
+                                              }
+                                            }
+
+                                            final progress = totalItems == 0 ? 0.0 : done / totalItems;
+
+                                            return Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  "$done / $totalItems",
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Colors.black54,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 6),
+                                                LinearProgressIndicator(
+                                                  value: progress,
+                                                  minHeight: 8,
+                                                  backgroundColor: Colors.grey[200],
+                                                  color: Colors.purple,
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    if (NineMonths)
+                                      Padding(
+                                        padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+                                        child: StreamBuilder<DocumentSnapshot>(
+                                          stream: FirebaseFirestore.instance
+                                              .collection("baby_profiles")
+                                              .doc(selectedBabyId)
+                                              .collection("milestones")
+                                              .doc("9_months")
+                                              .snapshots(),
+                                          builder: (context, snapshot)
+                                          {
+                                            int done = 0;
+                                            final int totalItems = total9MonthsItems;
+
+                                            if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists)
+                                            {
+                                              final data = snapshot.data!.data() as Map<String, dynamic>? ?? {
+
+                                              };
+                                              final raw = data["completed"];
+
+                                              if (raw is Map)
+                                              {
+                                                done = raw.values.where((v) => v == true).length;
+                                              }
+                                            }
+
+                                            final progress = totalItems == 0 ? 0.0 : done / totalItems;
+
+                                            return Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  "$done / $totalItems",
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Colors.black54,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 6),
+                                                LinearProgressIndicator(
+                                                  value: progress,
+                                                  minHeight: 8,
+                                                  backgroundColor: Colors.grey[200],
+                                                  color: Colors.purple,
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    if (TwelveMonths)
+                                      Padding(
+                                        padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+                                        child: StreamBuilder<DocumentSnapshot>(
+                                          stream: FirebaseFirestore.instance
+                                              .collection("baby_profiles")
+                                              .doc(selectedBabyId)
+                                              .collection("milestones")
+                                              .doc("12_months")
+                                              .snapshots(),
+                                          builder: (context, snapshot)
+                                          {
+                                            int done = 0;
+                                            final int totalItems = total12MonthsItems;
+
+                                            if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists)
+                                            {
+                                              final data = snapshot.data!.data() as Map<String, dynamic>? ?? {
+
+                                              };
+                                              final raw = data["completed"];
+
+                                              if (raw is Map)
+                                              {
+                                                done = raw.values.where((v) => v == true).length;
+                                              }
+                                            }
+
+                                            final progress = totalItems == 0 ? 0.0 : done / totalItems;
+
+                                            return Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  "$done / $totalItems",
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Colors.black54,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 6),
+                                                LinearProgressIndicator(
+                                                  value: progress,
+                                                  minHeight: 8,
+                                                  backgroundColor: Colors.grey[200],
+                                                  color: Colors.purple,
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    Expanded(
                                   child: Center(
                                   child: Padding(
                                     padding: EdgeInsets.all(16),
