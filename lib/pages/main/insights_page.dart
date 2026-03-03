@@ -1,10 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tinytales/pages/machinelearning/cry_detection.dart';
-
+import 'package:firebase_database/firebase_database.dart';
 
 class InsightsPage extends StatefulWidget
 {
-  const InsightsPage({super.key});
+   InsightsPage({super.key});
 
   @override
   State<InsightsPage> createState() => _InsightsPageState();
@@ -14,9 +16,44 @@ class _InsightsPageState extends State<InsightsPage>
 {
   bool isRunning = false;
 
+  final auth = FirebaseAuth.instance;
+  String? selectedBabyId;
+
+  String rawResultText = "";
+  String boostedResultText = "";
+
+
+  @override
+  void initState()
+  {
+    super.initState();
+    _loadBabies();
+  }
+  Future<void> _loadBabies() async
+  {
+    final user = auth.currentUser;
+
+    if (user == null)
+    {
+      return;
+    }
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection("baby_profiles")
+        .where("userId", isEqualTo: user.uid)
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isNotEmpty)
+    {
+      selectedBabyId = snapshot.docs.first.id;
+    }
+    setState(() {});
+  }
+
   String title = "Ready";
   String body = "Tap to test cry detection";
-  final String demoAssetPath = "assets/machineLearning/test_spectrogram.png";
+  final String demoAssetPath = "assets/machineLearning/test_spectrogram2.png";
 
   Future<void> _runTest() async
   {
