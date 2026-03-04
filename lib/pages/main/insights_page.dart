@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tinytales/pages/machinelearning/cry_detection.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:tinytales/pages/machinelearning/cry_context.dart';
 
 class InsightsPage extends StatefulWidget
 {
@@ -18,6 +18,7 @@ class _InsightsPageState extends State<InsightsPage>
 
   final auth = FirebaseAuth.instance;
   String? selectedBabyId;
+  final cry_context engine = cry_context();
 
   String rawResultText = "";
   String boostedResultText = "";
@@ -57,11 +58,7 @@ class _InsightsPageState extends State<InsightsPage>
 
   Future<void> _runTest() async
   {
-    if (isRunning)
-    {
-      return;
-    }
-
+    if (isRunning) return;
     setState(()
     {
       isRunning = true;
@@ -73,35 +70,40 @@ class _InsightsPageState extends State<InsightsPage>
     {
       final pairs = await cry_Detection().predictProbFromAsset(demoAssetPath);
 
-      if (!mounted)
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null)
       {
         return;
       }
-
-      if(pairs.isEmpty)
+      if (selectedBabyId == null)
+      {
+        setState(()
         {
+          isRunning = false;
+          title = "Error";
+          body = "no result";
+        });
+        return;
+      }
+
+      String rawText = "";
+      for (final p in pairs.take(2))
+      {
+        rawText = "$rawText${p["label"]}: ${p["percent"]}%\n";
+      }
+
+      final trackedText = await engine.run(
+        userId: user.uid,
+        babyId: selectedBabyId!,
+        assetPath: demoAssetPath,
+        modelPairs: pairs,
+      );
+
       setState(()
       {
         isRunning = false;
-        title = "Result";
-        body = "no result";
-      });
-      return;
-    }
-
-      String text = "";
-
-      for(final p in pairs)
-        {
-          final label = p["label"].toString();
-          final percent = p["percent"].toString();
-          text = "$text$label: $percent%\n";
-        }
-      setState(()
-      {
-        isRunning = false;
-        title = " Model Probabilities";
-        body = text.trim();
+        title = "Results";
+        body = "From analysing this cry, we think:\n${rawText.trim()}\n\nFrom what we tracked:\n$trackedText";
       });
     }
     catch (e)

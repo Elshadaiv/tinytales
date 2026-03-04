@@ -89,6 +89,9 @@ flutter:
     - assets/machineLearning/baby_sound_classifier_v4.tflite
     - assets/machineLearning/labels.txt
     - assets/machineLearning/test_spectrogram.png
+    - assets/machineLearning/test_spectrogram1.png
+    - assets/machineLearning/test_spectrogram2.png
+    - assets/machineLearning/test_spectrogram3.png
     - assets/machineLearning/
     - assets/milestones/
 
