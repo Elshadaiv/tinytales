@@ -279,4 +279,135 @@ class cry_context
     return best;
   }
 
+  String _smartExplanation({
+    required String label,
+    required int percent,
+    required int feedMins,
+    required int sleepMins,
+    required int nappyMins,
+    required String nappyType,
+  })
+  {
+    String timeLine = "";
+    int toHours(int mins)
+    {
+      if (mins < 0) return -1;
+      return (mins / 60).floor();
+    }
+
+    final nappyH = toHours(nappyMins);
+    final lower = label.toLowerCase();
+
+    if (lower.contains("hungry"))
+    {
+      if (feedMins >= 60)
+      {
+        final feedH = (feedMins / 60).floor();
+        timeLine = "since the baby hasn’t been fed in ${feedH} hours";
+        return "$timeLine, we’re $percent% confident this is a hungry cry.";
+      }
+      return "Everything up-to-date!";
+    }
+    if (lower.contains("tired"))
+    {
+      if (sleepMins >= 60)
+      {
+        final sleepH = (sleepMins / 60).floor();
+        timeLine = "since the baby hasn’t slept in ${sleepH} hours";
+        return "$timeLine, we’re $percent% confident this is a tired cry.";
+      }
+      return "Everything up-to-date!";
+    }
+
+    if (lower.contains("discomfort"))
+    {
+      if (nappyH >= 0)
+      {
+        if (nappyType.contains("dirty"))
+        {
+          timeLine = "since the last nappy was dirty and changed ${nappyH} hours ago";
+        }
+        else
+        {
+          timeLine = "since the last nappy change was ${nappyH} hours ago";
+        }
+      }
+      else
+      {
+        timeLine = "based on nappy history";
+      }
+      return "$timeLine, we’re $percent% confident this is a discomfort/ pain cry";
+    }
+    return "we’re $percent% confident this is $label.";
+  }
+
+  Future<String> run({
+    required String userId,
+    required String babyId,
+    required String assetPath,
+    required List<Map<String, dynamic>> modelPairs,
+  }) async
+  {
+    final contextData = await _getTrackingContext(
+      userId: userId,
+      babyId: babyId,
+    );
+
+    final int feedMins = contextData["minsSinceFeed"] is int ? contextData["minsSinceFeed"] : -1;
+    final int sleepMins = contextData["minsSinceSleep"] is int ? contextData["minsSinceSleep"] : -1;
+    final int nappyMins = contextData["minsSinceNappy"] is int ? contextData["minsSinceNappy"] : -1;
+    final String nappyType = (contextData["nappyType"] ?? "").toString().toLowerCase();
+
+    final String contextPick = _pickContextLabel(
+      feedMins: feedMins,
+      sleepMins: sleepMins,
+      nappyMins: nappyMins,
+      nappyType: nappyType,
+    );
+
+    final bool allowBoost = contextPick.isNotEmpty;
+
+    String rawText = "";
+    for (final p in modelPairs.take(2))
+    {
+      rawText = "$rawText${p["label"]}: ${p["percent"]}%\n";
+    }
+
+    String smartLine = "Everything up-to-date!";
+
+    if (allowBoost)
+    {
+      final boosted = _boostWithContext(
+        modelPairs: modelPairs,
+        ctx: contextData,
+        boostMode: contextPick,
+      );
+
+      final top = boosted.isNotEmpty ? boosted.first : null;
+      if (top != null)
+      {
+        final String finalLabel = (contextPick.isNotEmpty && top["label"].toString().toLowerCase() != contextPick)
+            ? contextPick.substring(0, 1).toUpperCase() + contextPick.substring(1)
+            : top["label"].toString();
+
+        final int finalPercent = top["percent"] is int
+            ? top["percent"] as int
+            : int.tryParse(top["percent"].toString()) ?? 0;
+
+        smartLine = _smartExplanation(
+          label: finalLabel,
+          percent: finalPercent,
+          feedMins: feedMins,
+          sleepMins: sleepMins,
+          nappyMins: nappyMins,
+          nappyType: nappyType,
+        );
+      }
+    }
+    else
+    {
+      smartLine = "Everything up-to-date!";
+    }
+    return smartLine;
+  }
 }
