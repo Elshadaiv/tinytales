@@ -51,7 +51,7 @@ dependencies:
   flutter_card_swiper: ^7.2.0
   video_player: ^2.10.1
   chewie: ^1.13.0
-
+  youtube_player_flutter: ^9.1.3
 
 
 

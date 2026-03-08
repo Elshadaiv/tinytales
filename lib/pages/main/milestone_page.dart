@@ -6,6 +6,7 @@ import 'package:tinytales/pages/milestones/milestone_checklist3m.dart';
 import 'package:tinytales/pages/milestones/milestone_checklist6m.dart';
 import 'package:tinytales/pages/milestones/milestone_checklist9m.dart';
 import '../milestones/milestone_checklist12m.dart';
+import 'package:tinytales/pages/milestones/milestones_videos.dart';
 
 
 
@@ -214,22 +215,41 @@ class _milestone_pageState extends State<milestone_page>
 
                       if (showVideos) ...[
                         SizedBox(height: 12,),
-
-                        Container(
+                          GestureDetector(
+                          onTap: ()
+                          {
+                            Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                            builder: (_) => MilestoneVideoPage
+                          (
+                          title: "4-6 Months Rolling", youtubeUrl: "https://www.youtube.com/watch?v=Dqsdem54PsA",
+                            ),
+                          ),
+                          );
+                          },
+                        child: Container(
                           padding: EdgeInsets.all(12),
                           decoration:  BoxDecoration(
                             color: Colors.grey[100],
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: Text(
-                            "4-6 Months",
+                          child: Row(
+                            children: [
+                              Expanded(child: Text(
+                            "4-6 Months Rolling",
                                 style: TextStyle(color: Colors.black54),
                           ),
                         ),
+                        Icon(Icons.play_circle_fill, color: Colors.black54),
                       ],
-                    ],
+                          ),
                   ),
                 ),
+              ],
+              ],
+                  ),
+              ),
               SizedBox(height: 14),
 
               Expanded(
