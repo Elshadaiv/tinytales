@@ -25,7 +25,7 @@ class _milestone_pageState extends State<milestone_page>
 
   final int total3MonthsItems = 15;
   final int total6MonthsItems = 14;
-  final int total9MonthsItems = 11;
+  final int total9MonthsItems = 12;
   final int total12MonthsItems = 11;
 
 
@@ -35,6 +35,14 @@ class _milestone_pageState extends State<milestone_page>
   List<Map<String, dynamic>> babies = [
 
   ];
+
+  DateTime? selectedBabyDob;
+  int babyAgeMonths = 0;
+
+  bool complete3Months = false;
+  bool complete6Months = false;
+  bool complete9Months = false;
+
 
 
   final List<Map<String, String>> milestones =
@@ -70,7 +78,6 @@ class _milestone_pageState extends State<milestone_page>
     }
     final snapshot = await FirebaseFirestore.instance
         .collection("baby_profiles")
-        .where("userId", isEqualTo: user.uid)
         .get();
 
     babies = snapshot.docs.map((doc)
@@ -79,12 +86,43 @@ class _milestone_pageState extends State<milestone_page>
         {
           "id": doc.id,
           "name": doc.get("name").toString(),
+          "dob": doc.get("dob").toString(),
         };
     }).toList();
     if (babies.isNotEmpty)
     {
-      selectedBabyId ??= babies.first["id"];
+      if (selectedBabyId == null)
+      {
+        await _setSelectedBaby(babies.first["id"]);
+      }
     }
+    else
+    {
+      if (mounted) {
+        setState(() {});
+      }
+    }
+  }
+
+  Future<void> _setSelectedBaby(String babyId) async
+  {
+    selectedBabyId = babyId;
+
+    final selectedBaby = babies.firstWhere((b) => b["id"].toString() == babyId,);
+
+    final dobText = selectedBaby["dob"]?.toString() ?? "";
+    selectedBabyDob = _parseDob(dobText);
+
+    if (selectedBabyDob != null)
+    {
+      babyAgeMonths = _calculateAgeInMonths(selectedBabyDob!);
+    }
+    else
+    {
+      babyAgeMonths = 0;
+    }
+
+    await _loadMilestoneLocks();
 
     if (mounted)
     {
@@ -94,25 +132,98 @@ class _milestone_pageState extends State<milestone_page>
     }
   }
 
-  void _openChecklist()
+
+  DateTime? _parseDob(String? dob)
+  {
+    if (dob == null || dob.isEmpty)
+    {
+      return null;
+    }
+
+    final iso = DateTime.tryParse(dob);
+    if (iso != null)
+    {
+      return iso;
+    }
+
+    final parts = dob.split("/");
+    if (parts.length == 3)
+    {
+      final day = int.tryParse(parts[0]);
+      final month = int.tryParse(parts[1]);
+      final year = int.tryParse(parts[2]);
+
+      if (day != null && month != null && year != null)
+      {
+        return DateTime(year, month, day);
+      }
+    }
+    return null;
+  }
+  int _calculateAgeInMonths(DateTime dob)
+  {
+    final now = DateTime.now();
+
+    int months = (now.year - dob.year) * 12 + (now.month - dob.month);
+
+    if (now.day < dob.day)
+    {
+      months--;
+    }
+
+    return months < 0 ? 0 : months;
+  }
+
+  Future<bool> _isMilestoneComplete(String docId, int totalItems) async
   {
     if (selectedBabyId == null)
     {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("no baby profile found.")),
-      );
+      return false;
+    }
+
+    final snap = await FirebaseFirestore.instance
+        .collection("baby_profiles")
+        .doc(selectedBabyId)
+        .collection("milestones")
+        .doc(docId)
+        .get();
+
+    if (!snap.exists)
+    {
+      return false;
+    }
+
+    final data = snap.data() ?? {};
+    final raw = data["completed"];
+
+    if (raw is! Map)
+    {
+      return false;
+    }
+    final done = raw.values.where((v) => v == true).length;
+    return done >= totalItems;
+  }
+
+  Future<void> _loadMilestoneLocks() async
+  {
+    if (selectedBabyId == null)
+    {
       return;
     }
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MilestoneCheckList3m(babyId: selectedBabyId!),
-      ),
-    );
+
+    complete3Months = await _isMilestoneComplete("3_months", total3MonthsItems);
+    complete6Months = await _isMilestoneComplete("6_months", total6MonthsItems);
+    complete9Months = await _isMilestoneComplete("9_months", total9MonthsItems);
+
+    if (mounted)
+    {
+      setState(() {});
+    }
   }
 
     @override
   Widget build(BuildContext context) {
+      final bool videosLocked = babyAgeMonths < 4;
       return Scaffold(
         backgroundColor: Colors.grey[300],
         appBar: AppBar(
@@ -128,16 +239,13 @@ class _milestone_pageState extends State<milestone_page>
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: selectedBabyId,
-                  onChanged: (val)
+                  onChanged: (val) async
                   {
                     if (val == null)
                     {
                       return;
                     }
-                    setState(()
-                    {
-                      selectedBabyId = val;
-                    });
+                    await _setSelectedBaby(val);
                   },
                   items: babies.map<DropdownMenuItem<String>>((b)
                   {
@@ -156,7 +264,7 @@ class _milestone_pageState extends State<milestone_page>
           child: Column(
             children: [
 
-              if (selectedBabyId == null)
+              if (babies.isEmpty)
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.all(16),
@@ -218,6 +326,10 @@ class _milestone_pageState extends State<milestone_page>
                           GestureDetector(
                           onTap: ()
                           {
+                            if(videosLocked)
+                              {
+                                return;
+                              }
                             Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -246,7 +358,45 @@ class _milestone_pageState extends State<milestone_page>
                           ),
                   ),
                 ),
-              ],
+
+                        SizedBox(height: 10),
+
+                        GestureDetector(
+                          onTap: ()
+                          {
+                            if(videosLocked)
+                            {
+                              return;
+                            }
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => MilestoneVideoPage
+                                  (
+                                  title: "4-6 Months Sitting", youtubeUrl: "https://www.youtube.com/watch?v=CGG4iXdXEQk",
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: EdgeInsets.all(12),
+                            decoration:  BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(child: Text(
+                                  "4-6 Months Sitting",
+                                  style: TextStyle(color: Colors.black54),
+                                ),
+                                ),
+                                Icon(Icons.play_circle_fill, color: Colors.black54),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
               ],
                   ),
               ),
@@ -268,6 +418,17 @@ class _milestone_pageState extends State<milestone_page>
                         final bool TwelveMonths = index == 3;
 
 
+                        final bool lock3 = babyAgeMonths < 3;
+                        final bool lock6 = babyAgeMonths < 6;
+                        final bool lock9 = babyAgeMonths < 9;
+                        final bool lock12 = babyAgeMonths < 12;
+
+                        final bool isLocked =
+                            (ThreeMonths && lock3) ||
+                                (SixMonths && lock6) ||
+                                (NineMonths && lock9) ||
+                                (TwelveMonths && lock12);
+
                         return GestureDetector(
 
                           onTap: ()
@@ -279,6 +440,9 @@ class _milestone_pageState extends State<milestone_page>
                               );
                               return;
                             }
+
+                            if(isLocked)
+                              return;
 
                             if (index == 0)
                             {
@@ -321,7 +485,9 @@ class _milestone_pageState extends State<milestone_page>
                             }
                           },
 
-                          child: Container(
+                          child: Stack(
+                            children: [
+                              Container(
                             width: 240,
                             margin: EdgeInsets.only(right: 16),
                             decoration: BoxDecoration(
@@ -580,6 +746,25 @@ class _milestone_pageState extends State<milestone_page>
                                 ),
                               ],
                             ),
+                          ),
+                              if (isLocked)
+                                Positioned.fill(
+                                  child: Container(
+                                    margin: EdgeInsets.only(right: 16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black12,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.lock,
+                                        size: 150,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         );
                       },
