@@ -56,4 +56,12 @@ class NotificationService
         notificationDetails,
     );
   }
+
+  static Future<void> showMilestoneNotification() async
+  {
+    await showNotification(
+      title: "Milestone Reminder",
+      body: "Check your baby’s milestones and keep tracking progress!",
+    );
+  }
 }

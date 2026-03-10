@@ -5,6 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:tinytales/pages/milestones/milestone_checklist3m.dart';
 import 'package:tinytales/pages/milestones/milestone_checklist6m.dart';
 import 'package:tinytales/pages/milestones/milestone_checklist9m.dart';
+import '../../services/notification_service.dart';
 import '../milestones/milestone_checklist12m.dart';
 import 'package:tinytales/pages/milestones/milestones_videos.dart';
 
@@ -94,6 +95,10 @@ class _milestone_pageState extends State<milestone_page>
       if (selectedBabyId == null)
       {
         await _setSelectedBaby(babies.first["id"]);
+        Future.delayed(Duration(seconds: 2), ()
+        {
+          NotificationService.showMilestoneNotification();
+        });
       }
     }
     else
