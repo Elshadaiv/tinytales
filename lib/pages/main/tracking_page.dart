@@ -12,6 +12,7 @@ import 'package:tinytales/pages/history/SleepHistoryList.dart';
 import 'package:tinytales/pages/forms/addTemperatureForm.dart';
 import 'package:tinytales/pages/history/TemperatureHistoryList.dart';
 
+import '../baby/fever_guidance_page.dart';
 import '../history/feeding_history_page.dart';
 
 class TrackingPage extends StatefulWidget {
@@ -909,6 +910,27 @@ class _TrackingPageState extends State<TrackingPage> {
                         backgroundColor: Colors.white,
                       ),
                       child: Text("Add Temperature"),
+                    ),
+                  ),
+
+                  SizedBox(height: 10),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                      ),
+                      onPressed: ()
+                      {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => FeverGuidancePage(),
+                          ),
+                        );
+                      },
+                      child: Text("View Fever Guidance"),
                     ),
                   ),
                 ],
