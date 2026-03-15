@@ -17,6 +17,7 @@ class TemperatureHistoryList extends StatelessWidget
   {
     final userId = FirebaseAuth.instance.currentUser!.uid;
     final db = FirebaseDatabase.instance.ref();
+    final medsRef = db.child("users/$userId/tracking/$babyId/medications");
 
     return Scaffold(
       appBar: AppBar(
@@ -109,6 +110,60 @@ class TemperatureHistoryList extends StatelessWidget
                     ),
                     SizedBox(height: 4),
                     Text(formattedTime),
+                    
+                    SizedBox(height: 8,),
+                    StreamBuilder(stream: medsRef.onValue,
+                      builder: (context, medSnapshot)
+                      {
+                        if (!medSnapshot.hasData || medSnapshot.data!.snapshot.value == null)
+                        {
+                          return SizedBox();
+                        }
+
+                        final medData = medSnapshot.data!.snapshot.value;
+                        Map<dynamic, dynamic> meds = {
+
+                        };
+
+                        if (medData is List)
+                        {
+                          meds = {
+                            for (int i = 0; i < medData.length; i++)
+                              if (medData[i] != null) i: medData[i]
+                          };
+                        }
+                        else if (medData is Map)
+                        {
+                          meds = medData;
+                        }
+
+                        final medEntries = meds.values.map((e) =>
+                        {
+                          "type": e["type"],
+                          "dose": e["dose"],
+                          "time": e["time"],
+                        }).toList();
+
+                        if (medEntries.isEmpty)
+                        {
+                          return SizedBox();
+                        }
+                        medEntries.sort((a, b)
+                        {
+                          final at = DateTime.tryParse(a["time"]) ?? DateTime(1970);
+                          final bt = DateTime.tryParse(b["time"]) ?? DateTime(1970);
+                          return bt.compareTo(at);
+                        });
+
+                        final latestMed = medEntries.first;
+
+                        return Text(
+                          "Medication: ${latestMed["type"]} (${latestMed["dose"]})",
+                          style: TextStyle(fontSize: 13, color: Colors.purple, fontWeight: FontWeight.w600,
+                          ),
+                        );
+                      }
+                    ),
                   ],
                 ),
               );

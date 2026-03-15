@@ -276,6 +276,36 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
     };
   }
 
+
+  Future<void> _logMedication (String type, String dose) async
+  {
+    if(selectedBabyAgeMonths < 3)
+      {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(
+            "Babies under 3 months with fever should be assessed by a doctor.",
+          ),
+          ),
+        );
+        return;
+      }
+
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final ref = FirebaseDatabase.instance
+    .ref()
+      .child("users/$userId/tracking/$selectedBabyId/medications").push();
+
+    await ref.set({
+      "type": type,
+      "dose": dose,
+      "time": DateTime.now().toIso8601String(),
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("$type dose logged")),
+    );
+  }
+
   Widget _buildMedicationGuidance(double temp)
   {
     final result = _checkFever(temp, selectedBabyAgeMonths);
@@ -335,14 +365,47 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
               fontWeight: FontWeight.w600
   ),
   ),
-    SizedBox(height: 8,),
-  Text(
-  "Always follow the medication packaging instructions and unsure, consult with a healthcare professional",
-    style: TextStyle(
-      fontSize: 13,
-    color: Colors.black54,
-  ),
-  ),
+    SizedBox(height: 6,),
+
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+
+              children: [
+                Text(MedicationGuidance.calpol(selectedBabyAgeMonths),
+                style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+
+                SizedBox(height: 6,),
+
+                ElevatedButton(
+                  onPressed: ()
+                  {
+                    _logMedication(
+                      "Calpol", MedicationGuidance.calpol(selectedBabyAgeMonths),
+                    );
+                  },
+                  child: Text("Log Calpol Dose"),
+                ),
+
+                SizedBox(height:12),
+
+                Text(
+                  MedicationGuidance.nurofen(selectedBabyAgeMonths),
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height:6),
+
+                ElevatedButton(
+                  onPressed: ()
+                  {
+                    _logMedication(
+                      "Nurofen", MedicationGuidance.nurofen(selectedBabyAgeMonths),
+                    );
+                  },
+                  child: Text("Log Nurofen Dose"),
+                ),
+              ],
+            )
         ]
     ],
       ),

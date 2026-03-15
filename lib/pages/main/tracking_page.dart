@@ -144,6 +144,25 @@ class _TrackingPageState extends State<TrackingPage> {
         });
 
   }
+  
+  Future<void> addMedication({
+    required String babyId,
+    required String type,
+    required String dose,
+    required DateTime time,
+  }) async
+
+  {
+    final userId = _auth.currentUser!.uid;
+    
+    final ref = _db.child("users/$userId/tracking/$babyId/medications").push();
+
+    await ref.set({
+      "type": type,
+      "dose": dose,
+      "time": time.toIso8601String(),
+    });
+  }
 
   String _formatTime(DateTime time)
   {
