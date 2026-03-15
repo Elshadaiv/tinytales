@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:tinytales/data/medication_guidance.dart';
 
 class FeverGuidancePage extends StatefulWidget
 {
@@ -275,6 +276,79 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
     };
   }
 
+  Widget _buildMedicationGuidance(double temp)
+  {
+    final result = _checkFever(temp, selectedBabyAgeMonths);
+    final status = result["status"];
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white, borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+
+      child:  Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          Text(
+            "Medication Guide",
+            style: TextStyle(
+              fontSize: 18, fontWeight: FontWeight.w700,
+            ),
+          ),
+          SizedBox(height: 10,),
+
+          if(status == "NORMAL")
+            Text(
+              "Medication not required at this time",
+              style: TextStyle(color: Colors.black54),
+            ),
+          if(status != "NORMAL") ...[
+            Text(
+              MedicationGuidance.calpol(selectedBabyAgeMonths),
+            style: TextStyle(fontWeight: FontWeight.w600,
+  ),
+    ),
+
+           SizedBox(height:6),
+  Text(
+    MedicationGuidance.nurofen(selectedBabyAgeMonths),
+    style: TextStyle(
+    fontWeight: FontWeight.w600,
+    ),
+  ),
+  SizedBox(height: 10,),
+
+          if(selectedBabyAgeMonths <= 3)
+             Text(
+                  "Emergency, Babies under 3 months with fever should seek attention with a doctor.",
+                  style: TextStyle(color: Colors.redAccent,
+              fontWeight: FontWeight.w600
+  ),
+  ),
+    SizedBox(height: 8,),
+  Text(
+  "Always follow the medication packaging instructions and unsure, consult with a healthcare professional",
+    style: TextStyle(
+      fontSize: 13,
+    color: Colors.black54,
+  ),
+  ),
+        ]
+    ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context)
   {
@@ -451,6 +525,11 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
                 ],
               )
             ),
+
+            SizedBox(height: 14),
+
+            if (latestTemperature != null)
+              _buildMedicationGuidance(latestTemperature!)
           ],
         ),
       ),
