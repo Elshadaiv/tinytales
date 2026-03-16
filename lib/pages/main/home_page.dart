@@ -11,6 +11,8 @@ import 'package:tinytales/pages/main/tracking_page.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:tinytales/pages/main/milestone_page.dart';
 
+import '../../services/analytics_page.dart';
+
 
 
 
@@ -88,6 +90,9 @@ class HomePageState extends State<HomePage> {
             SizedBox(height: 16),
 
             Expanded(
+              child: Column(
+                children: [
+                  Expanded(
               child: GridView.count(
                 crossAxisCount: 2,
                 crossAxisSpacing: 12,
@@ -100,8 +105,31 @@ class HomePageState extends State<HomePage> {
                 ],
               ),
             ),
+
+            SizedBox(height: 12,),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: ()
+                {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AnalyticsPage(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                ),
+                child: Text("View Analytics"),
+              ),
+            ),
           ],
         ),
+            ),
+        ],
+      ),
       ),
       InsightsPage(),
       TrackingPage(),
@@ -347,19 +375,6 @@ class HomePageState extends State<HomePage> {
     return "$h:$m";
   }
 
-  String _formatDurationMinutes(int minutes)
-  {
-    final h = minutes ~/ 60;
-    final m = minutes % 60;
-
-    if (h == 0)
-      return "${m}m";
-
-    if (m == 0)
-      return "${h}h";
-
-    return "${h}h ${m}m";
-  }
 
 
   Widget _summary(String title, String value, IconData icon) {

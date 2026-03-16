@@ -158,7 +158,7 @@ class TemperatureHistoryList extends StatelessWidget
                         final latestMed = medEntries.first;
 
                         return Text(
-                          "Medication: ${latestMed["type"]} (${latestMed["dose"]})",
+                          "Medication Taken: (${latestMed["dose"]})",
                           style: TextStyle(fontSize: 13, color: Colors.purple, fontWeight: FontWeight.w600,
                           ),
                         );
