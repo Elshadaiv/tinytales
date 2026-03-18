@@ -30,6 +30,61 @@ class _AnalyticsPageState extends State<AnalyticsPage>
     "All",
   ];
 
+  final auth = FirebaseAuth.instance;
+  final db = FirebaseDatabase.instance.ref();
+
+  List<Map<String, dynamic>> babies = [
+
+  ];
+  String? selectedBabyId;
+
+  List<FlSpot> feedingSpots = [
+  ];
+  List<String> feedingLabels = [
+  ];
+
+  bool isLoading = true;
+
+
+  @override
+  void initState()
+  {
+    super.initState();
+    _loadBabies();
+  }
+
+  Future<void> _loadBabies() async
+  {
+    final userId = auth.currentUser!.uid;
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection("baby_profiles")
+        .where("userId", isEqualTo: userId)
+        .get();
+
+    babies = snapshot.docs.map((doc)
+    {
+      return
+        {
+          "id": doc.id,
+          "name": doc.get("name").toString(),
+        };
+    }).toList();
+
+    if (babies.isNotEmpty)
+    {
+      selectedBabyId ??= babies.first["id"];
+      await _loadFeedingData();
+    }
+
+    if (mounted)
+    {
+      setState(() {
+
+      });
+    }
+  }
+
   Widget _metricButton(String label)
   {
     final bool isSelected = selectedMetric == label;
@@ -40,6 +95,10 @@ class _AnalyticsPageState extends State<AnalyticsPage>
         {
           selectedMetric = label;
         });
+        if (label == "Feeding")
+        {
+          _loadFeedingData();
+        }
       },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -65,12 +124,13 @@ class _AnalyticsPageState extends State<AnalyticsPage>
   {
     final bool isSelected = selectedRange == label;
     return GestureDetector(
-      onTap: ()
+      onTap: () async
       {
         setState(()
         {
           selectedRange = label;
         });
+        await _loadFeedingData();
       },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -86,6 +146,100 @@ class _AnalyticsPageState extends State<AnalyticsPage>
         ),
       ),
     );
+  }
+
+
+  Future<void> _loadFeedingData() async
+  {
+    if (selectedBabyId == null)
+    {
+      return;
+    }
+
+    setState(()
+    {
+      isLoading = true;
+    });
+
+    final userId = auth.currentUser!.uid;
+
+    final snapshot = await db
+        .child("users/$userId/tracking/$selectedBabyId/feedings")
+        .get();
+
+    feedingSpots = [];
+    feedingLabels = [];
+
+    if (snapshot.exists)
+    {
+      final data = snapshot.value;
+
+      Map<dynamic, dynamic> raw = {};
+
+      if (data is List)
+      {
+        raw =
+        {
+          for (int i = 0; i < data.length; i++)
+            if (data[i] != null) i: data[i]
+        };
+      }
+      else if (data is Map)
+      {
+        raw = data;
+      }
+
+      final entries = raw.values.map((e) =>
+      {
+        "amount": e["amount"],
+        "time": e["time"],
+      })
+          .where((e) => e["time"] != null)
+          .toList();
+
+      entries.sort((a, b)
+      {
+        final at = DateTime.tryParse(a["time"].toString()) ?? DateTime(1970);
+        final bt = DateTime.tryParse(b["time"].toString()) ?? DateTime(1970);
+        return at.compareTo(bt);
+      });
+
+      List<Map<String, dynamic>> filtered = entries;
+
+      if (selectedRange == "7 Days" && entries.length > 7)
+      {
+        filtered = entries.sublist(entries.length - 7);
+      }
+    else if (selectedRange == "30 Days" && entries.length > 30)
+    {
+      filtered = entries.sublist(entries.length - 30);
+    }
+
+      for (int i = 0; i < filtered.length; i++)
+      {
+        final amount = double.tryParse(filtered[i]["amount"].toString()) ?? 0;
+        final time = DateTime.tryParse(filtered[i]["time"].toString());
+
+        feedingSpots.add(FlSpot(i.toDouble(), amount));
+
+        if (time != null)
+        {
+          feedingLabels.add("${time.day}/${time.month}");
+        }
+        else
+        {
+          feedingLabels.add("${i + 1}");
+        }
+      }
+    }
+
+    if (mounted)
+    {
+      setState(()
+      {
+        isLoading = false;
+      });
+    }
   }
 
 
@@ -105,6 +259,43 @@ class _AnalyticsPageState extends State<AnalyticsPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
+            DropdownButton<String>(
+              value: selectedBabyId,
+              hint: Text("Select Baby"),
+              onChanged: (val) async
+              {
+                if (val == null)
+                {
+                  return;
+                }
+                setState(()
+                {
+                  selectedBabyId = val;
+                });
+                await _loadFeedingData();
+              },
+              items: babies.map<DropdownMenuItem<String>>((baby)
+              {
+                return DropdownMenuItem<String>(
+                  value: baby["id"],
+                  child: Text(baby["name"]),
+                );
+              }).toList(),
+            ),
+
+            SizedBox(height: 20),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _rangeButton("7 Days"),
+                SizedBox(width: 10),
+                _rangeButton("30 Days"),
+                SizedBox(width: 10),
+                _rangeButton("All"),
+              ],
+            ),
 
             Container(
               width: double.infinity,
@@ -140,12 +331,54 @@ class _AnalyticsPageState extends State<AnalyticsPage>
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Center(
-                      child: Text(
-                        "$selectedMetric testing this",
-                        style: TextStyle(
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w600,
+                      child: selectedMetric != "Feeding"
+                          ? Center(
+                        child: Text("No Graph yet", style:
+                        TextStyle(
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                    : isLoading
+                        ? Center(child: CircularProgressIndicator(color: Colors.purple),
+                    )
+                        : feedingSpots.isEmpty
+                        ? Center(
+                      child: Text("No feeding data yet", style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    )
+                        : Padding(
+                      padding: EdgeInsets.all(12),
+                      child: LineChart(
+                        LineChartData(
+                          gridData: FlGridData(show: true),
+                          borderData: FlBorderData(show: false),
+                          titlesData: FlTitlesData(
+                            topTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),),
+                            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false),),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true, getTitlesWidget: (value, meta)
+                                {
+                                  final index = value.toInt();
+                                  if (index < 0 || index >= feedingLabels.length)
+                                  {
+                                    return SizedBox();
+                                  }
+                                  return Text(
+                                    feedingLabels[index], style: TextStyle(fontSize: 10),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          lineBarsData: [
+                            LineChartBarData(
+                              spots: feedingSpots,
+                              isCurved: true, barWidth: 3, dotData: FlDotData(show: true),),
+                          ],
                         ),
                       ),
                     ),
@@ -171,15 +404,6 @@ class _AnalyticsPageState extends State<AnalyticsPage>
             SizedBox(height: 16),
             SizedBox(height: 16),
 
-            Row(
-              children: ranges.map((range)
-              {
-                return Padding(
-                  padding: EdgeInsets.only(right: 10),
-                  child: _rangeButton(range),
-                );
-              }).toList(),
-            ),
           ],
         ),
       ),
