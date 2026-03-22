@@ -18,6 +18,8 @@ class _InsightsPageState extends State<InsightsPage>
 
   final auth = FirebaseAuth.instance;
   String? selectedBabyId;
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> babies = [
+  ];
   final cry_context engine = cry_context();
 
   String rawResultText = "";
@@ -45,16 +47,13 @@ class _InsightsPageState extends State<InsightsPage>
         .limit(1)
         .get();
 
-    if (snapshot.docs.isNotEmpty)
-    {
-      selectedBabyId = snapshot.docs.first.id;
-    }
+    babies = snapshot.docs;
     setState(() {});
   }
 
   String title = "Ready";
   String body = "Tap to test cry detection";
-  final String demoAssetPath = "assets/machineLearning/test_spectrogram2.png";
+  final String demoAssetPath = "assets/machineLearning/test_spectrogram.png";
 
   Future<void> _runTest() async
   {
@@ -122,6 +121,108 @@ class _InsightsPageState extends State<InsightsPage>
     }
   }
 
+  Widget _buildBabyCards()
+  {
+    if (babies.isEmpty)
+    {
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 18),
+        child: Container(
+          width: double.infinity, padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18),
+          ),
+          child: Text(
+            "No babies found. Please add a baby in the profile section.",
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.black54,
+            ),
+          ),
+        ),
+      );
+    }
+    return SizedBox(
+      height: 160,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: 18),
+        itemCount: babies.length,
+        itemBuilder: (context, index)
+        {
+          final baby = babies[index];
+          final data = baby.data();
+          final babyName = data["name"] ?? "Baby";
+          final isSelected = selectedBabyId == baby.id;
+          return GestureDetector(
+            onTap: ()
+            {
+              setState(()
+              {
+                if (isSelected)
+                {
+                  selectedBabyId = null;
+                }
+                else
+                {
+                  selectedBabyId = baby.id;
+                }
+              });
+            },
+            child: Container(
+              width: 220,
+              margin: EdgeInsets.only(right: 12),
+              padding: EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.purple.shade50 : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected ? Colors.purple : Colors.transparent,
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8, offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundColor: Colors.grey.shade300,
+                    child: Icon(
+                      Icons.child_care,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  SizedBox(height: 14),
+                  Text(
+                    babyName,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    isSelected ? "Baby crying?" : "Tap to select",
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isSelected ? Colors.purple : Colors.black54,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context)
   {
@@ -141,6 +242,9 @@ class _InsightsPageState extends State<InsightsPage>
                 fontWeight: FontWeight.w800,
               ),
             ),
+            SizedBox(height: 18),
+            _buildBabyCards(),
+            SizedBox(height: 18),
 
             SizedBox(height: 10),
             Expanded(
