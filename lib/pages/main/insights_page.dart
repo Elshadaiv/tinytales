@@ -24,6 +24,7 @@ class _InsightsPageState extends State<InsightsPage>
 
   String rawResultText = "";
   String boostedResultText = "";
+  bool get hasResultCard => title.isNotEmpty || body.isNotEmpty;
 
 
   @override
@@ -44,15 +45,14 @@ class _InsightsPageState extends State<InsightsPage>
     final snapshot = await FirebaseFirestore.instance
         .collection("baby_profiles")
         .where("userId", isEqualTo: user.uid)
-        .limit(1)
         .get();
 
     babies = snapshot.docs;
     setState(() {});
   }
 
-  String title = "Ready";
-  String body = "Tap to test cry detection";
+  String title = "";
+  String body = "";
   final String demoAssetPath = "assets/machineLearning/test_spectrogram.png";
 
   Future<void> _runTest() async
@@ -142,7 +142,7 @@ class _InsightsPageState extends State<InsightsPage>
       );
     }
     return SizedBox(
-      height: 160,
+      height: 170,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: 18),
@@ -168,44 +168,69 @@ class _InsightsPageState extends State<InsightsPage>
                 }
               });
             },
-            child: Container(
-              width: 220,
-              margin: EdgeInsets.only(right: 12),
-              padding: EdgeInsets.all(14),
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: 220),
+              width: 240,
+              margin: EdgeInsets.only(right: 14),
+              padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: isSelected ? Colors.purple.shade50 : Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: isSelected ? Colors.purple : Colors.transparent,
-                  width: 2,
+                  color: isSelected ? Colors.purple : Colors.grey.shade300,
+                  width: isSelected ? 2 : 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8, offset: Offset(0, 4),
+                    color: isSelected ? Colors.purple.withOpacity(0.10) : Colors.black12,
+                    blurRadius: isSelected ? 14 : 8,
+                    offset: Offset(0, isSelected ? 6 : 4),
                   ),
                 ],
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
-                    radius: 26,
-                    backgroundColor: Colors.grey.shade300,
-                    child: Icon(
-                      Icons.child_care,
-                      color: Colors.grey.shade700,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundColor: isSelected
+                            ? Colors.purple.shade100
+                            : Colors.grey.shade300,
+                        child: Icon(
+                          Icons.child_care,
+                          color: isSelected ? Colors.purple : Colors.grey.shade700,
+                        ),
+                      ),
+
+                      if (isSelected)
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.purple,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            "Selected",
+                            style: TextStyle(fontSize: 11, color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  SizedBox(height: 14),
+                  SizedBox(height: 18),
                   Text(
                     babyName,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 17,
                       fontWeight: FontWeight.w700,
+                      color: Colors.black87,
                     ),
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 6),
+                  SizedBox(height: 8),
                   Text(
                     isSelected ? "Baby crying?" : "Tap to select",
                     style: TextStyle(
@@ -229,6 +254,7 @@ class _InsightsPageState extends State<InsightsPage>
     final Color background = Colors.grey.shade200;
     final Color card = Colors.white;
     final Color accent = Colors.grey.shade900;
+    final bool hasSelectedBaby = selectedBabyId != null;
 
     return Scaffold(
       backgroundColor: background,
@@ -250,14 +276,14 @@ class _InsightsPageState extends State<InsightsPage>
             Expanded(
               child: Center(
                 child: GestureDetector(
-                  onTap: _runTest,
+                  onTap: hasSelectedBaby? _runTest : null,
                   child: AnimatedContainer(
                     duration: Duration(milliseconds: 200),
                     width: isRunning ? 180 : 200,
                     height: isRunning ? 180 : 200,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: card,
+                      color: hasSelectedBaby ? card : Colors.grey.shade300,
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black12,
@@ -270,13 +296,28 @@ class _InsightsPageState extends State<InsightsPage>
                     child: Icon(
                       isRunning ? Icons.graphic_eq : Icons.mic,
                       size: 48,
-                      color: accent,
+                      color: hasSelectedBaby ? accent: Colors.grey.shade500,
                     ),
                   ),
                 ),
               ),
             ),
 
+            Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Text(
+                hasSelectedBaby
+                    ? "Ready to analyse your babies cry?"
+                    : "Select which baby to start analysing",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+
+            if (hasResultCard)
             Container(
               width: double.infinity,
               margin: EdgeInsets.fromLTRB(18, 0, 18, 18),
