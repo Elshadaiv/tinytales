@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-DATA_DIR = os.path.join(BASE_DIR, "..", "baby_sounds_dataset")
-SPEC_DIR = os.path.join(BASE_DIR, "..", "spectrograms")
+DATA_DIR = os.path.join(BASE_DIR, "..", "baby_sounds_dataset_binary")
+SPEC_DIR = os.path.join(BASE_DIR, "..", "spectrograms_binary")
 def create_spectrogram(audio_path, output_path): # output folder for generated spectrogram images
     try:
         y, sr = librosa.load(audio_path, sr=22050)

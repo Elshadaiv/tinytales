@@ -1,4 +1,2 @@
-discomfort
-hungry
+non_pain
 pain
-tired
