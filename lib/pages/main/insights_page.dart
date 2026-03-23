@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tinytales/pages/machinelearning/cry_detection.dart';
 import 'package:tinytales/pages/machinelearning/cry_context.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
 
 class InsightsPage extends StatefulWidget
 {
@@ -25,6 +29,8 @@ class _InsightsPageState extends State<InsightsPage>
   String rawResultText = "";
   String boostedResultText = "";
   bool get hasResultCard => title.isNotEmpty || body.isNotEmpty;
+  String? uploadingBabyId;
+  final ImagePicker picker = ImagePicker();
 
 
   @override
@@ -121,6 +127,83 @@ class _InsightsPageState extends State<InsightsPage>
     }
   }
 
+  Future<void> _UploadBabyImage(String babyId) async
+  {
+    try
+    {
+      if (uploadingBabyId == babyId)
+      {
+        return;
+      }
+
+      setState(()
+      {
+        uploadingBabyId = babyId;
+      });
+
+      final XFile? pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 25,
+        maxWidth: 300,
+        maxHeight: 300,
+      );
+
+      if (pickedFile == null)
+      {
+        setState(()
+        {
+          uploadingBabyId = null;
+        });
+        return;
+      }
+
+      final file = File(pickedFile.path);
+      final bytes = await file.readAsBytes();
+      final base64String = base64Encode(bytes);
+
+      await FirebaseFirestore.instance
+          .collection("baby_profiles")
+          .doc(babyId)
+          .update({
+        "imageBase64": base64String,
+      });
+
+      await _loadBabies();
+      setState(()
+      {
+        uploadingBabyId = null;
+      });
+
+      if (!mounted)
+      {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Baby image saved"),
+        ),
+      );
+    }
+    catch (e)
+    {
+      setState(()
+      {
+        uploadingBabyId = null;
+      });
+
+      if (!mounted)
+      {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to save image"),
+        ),
+      );
+    }
+  }
+
   Widget _buildBabyCards()
   {
     if (babies.isEmpty)
@@ -151,8 +234,11 @@ class _InsightsPageState extends State<InsightsPage>
         {
           final baby = babies[index];
           final data = baby.data();
+          final babyId = baby.id;
           final babyName = data["name"] ?? "Baby";
-          final isSelected = selectedBabyId == baby.id;
+          final imageBase64 = data["imageBase64"] ?? "";          final isSelected = selectedBabyId == babyId;
+          final isUploadingImage = uploadingBabyId == babyId;
+
           return GestureDetector(
             onTap: ()
             {
@@ -193,15 +279,35 @@ class _InsightsPageState extends State<InsightsPage>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      CircleAvatar(
+                      GestureDetector(
+                        onTap: ()
+                        {
+                          _UploadBabyImage(babyId);
+                        },
+                      child: CircleAvatar(
                         radius: 28,
                         backgroundColor: isSelected
                             ? Colors.purple.shade100
                             : Colors.grey.shade300,
-                        child: Icon(
-                          Icons.child_care,
+                        backgroundImage: imageBase64.toString().isNotEmpty
+                            ? MemoryImage(base64Decode(imageBase64.toString()))
+                            : null,
+                        child: isUploadingImage
+                          ? SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: isSelected ? Colors.purpleAccent : Colors.grey.shade700,
+                          ),
+                        )
+                       : imageBase64.toString().isEmpty
+                        ? Icon(
+                          Icons.add,
                           color: isSelected ? Colors.purple : Colors.grey.shade700,
-                        ),
+                        )
+                            : null,
+                      ),
                       ),
 
                       if (isSelected)
