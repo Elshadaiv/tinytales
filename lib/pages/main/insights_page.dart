@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:record/record.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +8,8 @@ import 'package:tinytales/pages/machinelearning/cry_context.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 
+
+import 'package:path_provider/path_provider.dart';
 class InsightsPage extends StatefulWidget
 {
    InsightsPage({super.key});
@@ -32,6 +34,14 @@ class _InsightsPageState extends State<InsightsPage>
   String? uploadingBabyId;
   final ImagePicker picker = ImagePicker();
 
+
+
+
+  final AudioRecorder recorder = AudioRecorder();
+
+  String? recordedAudioPath;
+  bool isRecording = false;
+  bool isAnalysing = false;
 
   @override
   void initState()
@@ -203,6 +213,82 @@ class _InsightsPageState extends State<InsightsPage>
       );
     }
   }
+
+  Future<String> _getRecordingPath() async
+  {
+    final dir = await getTemporaryDirectory();
+    final fileName = "cry_recording_${DateTime.now().millisecondsSinceEpoch}.wav";
+    return "${dir.path}/$fileName";
+  }
+
+
+  Future<void> _startRecording() async
+  {
+    try
+    {
+      if (selectedBabyId == null)
+      {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Select a baby first"),
+          ),
+        );
+        return;
+      }
+      final hasPermission = await recorder.hasPermission();
+      if (!hasPermission)
+      {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Cannot record at this moment"),),
+        );
+        return;
+      }
+
+      setState(()
+      {
+        isRecording = true;
+        isAnalysing = false;
+        title = "Recording";
+        body = "We're currently listening...";
+        rawResultText = "";
+        boostedResultText = "";
+      });
+      final recordingPath = await _getRecordingPath();
+
+      await recorder.start(
+         RecordConfig(
+        encoder: AudioEncoder.wav,
+           sampleRate: 16000,
+           numChannels: 1,
+         ),
+        path: recordingPath,
+      );
+
+      await Future.delayed(Duration(seconds: 10));
+      final path = await recorder.stop();
+
+      setState(()
+      {
+        isRecording = false;
+        recordedAudioPath = path;
+        title = "Recording complete";
+        body = path != null
+            ? "Audio saved, We're looking into this!"
+            : "There's been a problem";
+      });
+    }
+    catch (e)
+    {
+      setState(()
+      {
+        isRecording = false;
+        title = "Error";
+        body = e.toString();
+      });
+    }
+  }
+
 
   Widget _buildBabyCards()
   {
@@ -382,11 +468,11 @@ class _InsightsPageState extends State<InsightsPage>
             Expanded(
               child: Center(
                 child: GestureDetector(
-                  onTap: hasSelectedBaby? _runTest : null,
+                  onTap: hasSelectedBaby && !isRecording ? _startRecording : null,
                   child: AnimatedContainer(
                     duration: Duration(milliseconds: 200),
-                    width: isRunning ? 180 : 200,
-                    height: isRunning ? 180 : 200,
+                    width: isRecording ? 180 : 200,
+                    height: isRecording ? 180 : 200,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: hasSelectedBaby ? card : Colors.grey.shade300,
@@ -400,7 +486,7 @@ class _InsightsPageState extends State<InsightsPage>
                     ),
                     alignment: Alignment.center,
                     child: Icon(
-                      isRunning ? Icons.graphic_eq : Icons.mic,
+                      isRecording ? Icons.graphic_eq : Icons.mic,
                       size: 48,
                       color: hasSelectedBaby ? accent: Colors.grey.shade500,
                     ),
@@ -412,7 +498,9 @@ class _InsightsPageState extends State<InsightsPage>
             Padding(
               padding: EdgeInsets.only(bottom: 12),
               child: Text(
-                hasSelectedBaby
+                isRecording
+                ? "Recording in progress...."
+                : hasSelectedBaby
                     ? "Ready to analyse your babies cry?"
                     : "Select which baby to start analysing",
                 style: TextStyle(
