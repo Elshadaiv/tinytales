@@ -55,6 +55,9 @@ dependencies:
   fl_chart: ^1.1.1
   image_picker: ^1.2.1
   record: ^6.2.0
+  wav: ^1.5.0
+  image: ^4.8.0
+  fftea: ^1.5.0+1
 
 
 
@@ -89,7 +92,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/machineLearning/baby_sound_classifier_v6.tflite
+    - assets/machineLearning/baby_sound_classifier_v7.tflite
     - assets/machineLearning/labels.txt
     - assets/machineLearning/test_spectrogram.png
     - assets/machineLearning/test_spectrogram1.png
