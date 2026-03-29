@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
-import 'package:path_provider/path_provider.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 
 class cry_Detection
@@ -13,7 +12,6 @@ class cry_Detection
   cry_Detection._internal();
 
   Interpreter? _interpreter;
-  List<String> _labels = [];
   final int inputSize = 128;
 
   Future<void> loadModel() async
@@ -23,7 +21,7 @@ class cry_Detection
       return;
     }
 
-    final ByteData modelData = await rootBundle.load("assets/machineLearning/baby_sound_classifier_v4.tflite");
+    final ByteData modelData = await rootBundle.load("assets/machineLearning/baby_sound_classifier_v7.tflite");
 
     final Uint8List modelBytes = modelData.buffer.asUint8List(modelData.offsetInBytes, modelData.lengthInBytes);
 
@@ -32,44 +30,13 @@ class cry_Detection
       options: InterpreterOptions()
         ..threads = 2,
     );
-
-    final rawLabels = await rootBundle.loadString("assets/machineLearning/labels.txt",
-    );
-
-    _labels = rawLabels
-        .split("\n")
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
   }
-  Future<File> _assetToTempFile(String assetPath) async
+  Future<List<Map<String, dynamic>>> predictProbFromFile(String imagePath) async
   {
-    final ByteData data = await rootBundle.load(assetPath);
-    final Directory tempDir = await getTemporaryDirectory();
-
-    final String ext = assetPath.toLowerCase().endsWith(".jpg") || assetPath.toLowerCase().endsWith(".jpeg")
-        ? ".jpg" : ".png";
-
-    final File file = File("${tempDir.path}/spectrogram_${DateTime.now().millisecondsSinceEpoch}$ext");
-    await file.writeAsBytes(data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
-    );
-
-    return file;
+    final File spectrogramFile = File(imagePath);
+    return predictProb(spectrogramFile);
   }
 
-
-  Future<String> predictCryFromAsset(String assetPath) async
-  {
-    final File tempFile = await _assetToTempFile(assetPath);
-    return predictCry(tempFile);
-  }
-
-
-  Future<List<Map<String, dynamic>>> predictProbFromAsset(String assetPath) async
-  {
-    final File tempFile = await _assetToTempFile(assetPath);
-    return predictProb(tempFile);
-  }
   Future<String> predictCry(File spectrogramImage) async
   {
     final pairs = await predictProb(spectrogramImage);
@@ -129,32 +96,28 @@ class cry_Detection
                     final g = pixel.g / 255.0;
                     final b = pixel.b / 255.0;
                     final gray = (0.299 * r + 0.587 * g + 0.114 * b);
-                    return [gray, gray, gray];
+                    return [gray];
                   },
                 ),
           ),
     );
 
-    final int numClasses = _interpreter!.getOutputTensor(0).shape[1];
-    final output = List.generate(1, (_) => List.filled(numClasses, 0.0),
-    );
-    _interpreter!.run(input, output);
+    final output = List.generate(1, (_) => List.filled(1, 0.0));_interpreter!.run(input, output);
 
-    final prediction = output[0];
+    final double probability = (output[0][0] as num).toDouble();
 
-    final pairs = List.generate(prediction.length, (i) {
-      final label = i < _labels.length ? _labels[i] : "unknown";
-      final score = prediction[i] is double
-          ? prediction[i]
-          : (prediction[i] as num).toDouble();
-      return
-        {
-          "label": label,
-          "score": score,
-          "percent": (score * 100).round(),
-        };
-    },
-    );
+    final List<Map<String, dynamic>> pairs = [
+      {
+        "label": "pain",
+        "score": probability,
+        "percent": (probability * 100).round(),
+      },
+      {
+        "label": "non_pain",
+        "score": 1 - probability,
+        "percent": ((1 - probability) * 100).round(),
+      },
+    ];
 
     pairs.sort((a, b) => (b["score"] as double).compareTo(a["score"] as double));
     return pairs;

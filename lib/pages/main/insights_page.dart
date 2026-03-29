@@ -8,6 +8,11 @@ import 'package:tinytales/pages/machinelearning/cry_context.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 
+import 'package:wav/wav.dart';
+import 'package:image/image.dart' as img;
+import 'package:fftea/fftea.dart';
+import 'dart:math' as math;
+
 
 import 'package:path_provider/path_provider.dart';
 class InsightsPage extends StatefulWidget
@@ -20,7 +25,6 @@ class InsightsPage extends StatefulWidget
 
 class _InsightsPageState extends State<InsightsPage>
 {
-  bool isRunning = false;
 
   final auth = FirebaseAuth.instance;
   String? selectedBabyId;
@@ -28,8 +32,6 @@ class _InsightsPageState extends State<InsightsPage>
   ];
   final cry_context engine = cry_context();
 
-  String rawResultText = "";
-  String boostedResultText = "";
   bool get hasResultCard => title.isNotEmpty || body.isNotEmpty;
   String? uploadingBabyId;
   final ImagePicker picker = ImagePicker();
@@ -41,7 +43,6 @@ class _InsightsPageState extends State<InsightsPage>
 
   String? recordedAudioPath;
   bool isRecording = false;
-  bool isAnalysing = false;
 
   @override
   void initState()
@@ -69,73 +70,7 @@ class _InsightsPageState extends State<InsightsPage>
 
   String title = "";
   String body = "";
-  final String demoAssetPath = "assets/machineLearning/test_spectrogram.png";
 
-  Future<void> _runTest() async
-  {
-    if (isRunning) return;
-    setState(()
-    {
-      isRunning = true;
-      title = "Listening";
-      body= "Testing cry detection";
-    });
-
-    try
-    {
-      final pairs = await cry_Detection().predictProbFromAsset(demoAssetPath);
-
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null)
-      {
-        return;
-      }
-      if (selectedBabyId == null)
-      {
-        setState(()
-        {
-          isRunning = false;
-          title = "Error";
-          body = "no result";
-        });
-        return;
-      }
-
-      String rawText = "";
-      for (final p in pairs.take(2))
-      {
-        rawText = "$rawText${p["label"]}: ${p["percent"]}%\n";
-      }
-
-      final trackedText = await engine.run(
-        userId: user.uid,
-        babyId: selectedBabyId!,
-        assetPath: demoAssetPath,
-        modelPairs: pairs,
-      );
-
-      setState(()
-      {
-        isRunning = false;
-        title = "Results";
-        body = "From analysing this cry, we think:\n${rawText.trim()}\n\nFrom what we tracked:\n$trackedText";
-      });
-    }
-    catch (e)
-    {
-      if (!mounted)
-      {
-        return;
-      }
-
-      setState(()
-      {
-        isRunning = false;
-        title = "Error";
-        body = e.toString();
-      });
-    }
-  }
 
   Future<void> _UploadBabyImage(String babyId) async
   {
@@ -221,6 +156,13 @@ class _InsightsPageState extends State<InsightsPage>
     return "${dir.path}/$fileName";
   }
 
+  Future<String> _getSpectrogramPath() async
+  {
+    final dir = await getTemporaryDirectory();
+    final fileName = "spectrogram_${DateTime.now().millisecondsSinceEpoch}.png";
+    return "${dir.path}/$fileName";
+  }
+
 
   Future<void> _startRecording() async
   {
@@ -240,7 +182,8 @@ class _InsightsPageState extends State<InsightsPage>
       {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Cannot record at this moment"),),
+            content: Text("Microphone access is needed to record audio."),
+          ),
         );
         return;
       }
@@ -248,11 +191,8 @@ class _InsightsPageState extends State<InsightsPage>
       setState(()
       {
         isRecording = true;
-        isAnalysing = false;
         title = "Recording";
         body = "We're currently listening...";
-        rawResultText = "";
-        boostedResultText = "";
       });
       final recordingPath = await _getRecordingPath();
 
@@ -277,6 +217,11 @@ class _InsightsPageState extends State<InsightsPage>
             ? "Audio saved, We're looking into this!"
             : "There's been a problem";
       });
+
+      if (path != null)
+      {
+        await _generateSpectrogramFromRecording();
+      }
     }
     catch (e)
     {
@@ -285,6 +230,173 @@ class _InsightsPageState extends State<InsightsPage>
         isRecording = false;
         title = "Error";
         body = e.toString();
+      });
+    }
+  }
+  List<double> _extractLoudestThreeSecond(List<double> samples, int sampleRate)
+  {
+    final int windowSize = sampleRate * 3;
+
+    if (samples.length <= windowSize)
+    {
+      return samples;
+    }
+    int bestStart = 0;
+    double bestScore = -1;
+
+    final int step = (sampleRate / 4).round();
+
+    for (int start = 0; start <= samples.length - windowSize; start += step)
+    {
+      double score = 0;
+
+      for (int i = start; i < start + windowSize; i++)
+      {
+        score += samples[i].abs();
+      }
+      if (score > bestScore)
+      {
+        bestScore = score;
+        bestStart = start;
+      }
+    }
+    return samples.sublist(bestStart, bestStart + windowSize);
+  }
+
+  Future<void> _generateSpectrogramFromRecording() async
+  {
+    try {
+      if (recordedAudioPath == null)
+      {
+        setState(() {
+          title = "Error";
+          body = "No recorded audio found";
+        });
+        return;
+      }
+
+      setState(()
+      {
+        title = "Analysing";
+        body = "We're analysing the cry now....";
+      });
+
+      final wav = await Wav.readFile(recordedAudioPath!);
+      final fullSamples = wav.channels.first;
+      final sampleRate = wav.samplesPerSecond;
+      final samples = _extractLoudestThreeSecond(fullSamples, sampleRate);
+      int fftSize = 512;
+
+      int hopLength = 256;
+      final spectrogram = <List<double>>[
+
+      ];
+
+      for (int start = 0; start + fftSize <= samples.length; start += hopLength) {
+        final chunk = samples.sublist(start, start + fftSize);
+        final stft = STFT(fftSize, Window.hanning(fftSize));
+        stft.run(chunk, (freq)
+            {
+          final mags = freq.discardConjugates().magnitudes().toList();
+          spectrogram.add(mags);
+        });
+      }
+      if (spectrogram.isEmpty)
+      {
+        setState(()
+        {
+          title = "Error";
+          body = "We weren't able to listen properly. Try again.";
+        });
+        return;
+      }
+      final int width = spectrogram.length;
+      final int height = spectrogram.first.length;
+
+      double minVal = double.infinity;
+      double maxVal = double.negativeInfinity;
+
+      for (final frame in spectrogram)
+      {
+        for (final v in frame)
+        {
+          final logV = v <= 0 ? 0.0 : math.log(v + 1);
+          if (logV < minVal) minVal = logV;
+          if (logV > maxVal) maxVal = logV;
+        }
+      }
+      final image = img.Image(width: width, height: height);
+      for (int x = 0; x < width; x++)
+      {
+        final frame = spectrogram[x];
+
+        for (int y = 0; y < height; y++)
+        {
+          final flippedY = height - 1 - y;
+          final raw = frame[y] <= 0 ? 0.0 : math.log(frame[y] + 1);
+          final norm = maxVal > minVal
+              ? ((raw - minVal) / (maxVal - minVal)) : 0.0;
+          final value = (norm * 255).clamp(0, 255).toInt();
+          image.setPixelRgb(x, flippedY, value, value, value);
+        }
+      }
+
+      final resized = img.copyResize(image, width: 128, height: 128);
+      final spectrogramPath = await _getSpectrogramPath();
+      final pngBytes = img.encodePng(resized);
+
+      final file = File(spectrogramPath);
+      await file.writeAsBytes(pngBytes);
+
+      setState(()
+      {
+        title = "We're further analysing";
+      });
+
+      final pairs = await cry_Detection().predictProbFromFile(spectrogramPath);
+
+      String rawText = "";
+
+      for (final p in pairs.take(2))
+      {
+        rawText = "$rawText${p["label"]}: ${p["percent"]}%\n";
+      }
+
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null || selectedBabyId == null)
+      {
+        setState(()
+        {
+          title = "Results";
+          body = rawText.trim();
+        });
+        return;
+      }
+
+      final trackedText = await engine.run(
+        userId: user.uid,
+        babyId: selectedBabyId!,
+        assetPath: spectrogramPath,
+        modelPairs: pairs,
+      );
+
+      setState(()
+      {
+        title = "Results";
+        body =
+        "From analysing this cry, we think:\n${rawText.trim()}\n\nFrom what we tracked:\n$trackedText";
+      });
+
+      return;
+    }
+
+    catch (e)
+    {
+      setState(()
+      {
+        title = "Error";
+        body = "Failed to generate spectrogram: $e";
       });
     }
   }
@@ -501,7 +613,7 @@ class _InsightsPageState extends State<InsightsPage>
                 isRecording
                 ? "Recording in progress...."
                 : hasSelectedBaby
-                    ? "Ready to analyse your babies cry?"
+                    ? "Ready to analyse your baby's cry?"
                     : "Select which baby to start analysing",
                 style: TextStyle(
                   fontSize: 13,
