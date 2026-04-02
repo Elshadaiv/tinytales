@@ -396,7 +396,6 @@ class _InsightsPageState extends State<InsightsPage>
       setState(()
       {
         title = "Error";
-        body = "Failed to generate spectrogram: $e";
       });
     }
   }

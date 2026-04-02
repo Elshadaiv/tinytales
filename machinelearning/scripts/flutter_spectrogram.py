@@ -42,7 +42,7 @@ def create_spec(audio_path, out_path):
         img.save(out_path)                                       
 
     except Exception as e:
-        print(f"Skipped {audio_path}: {e}")
+        print(f"n/a {audio_path}: {e}")
 
 for label in os.listdir(DATA_DIR):                          
     in_dir = os.path.join(DATA_DIR, label)
