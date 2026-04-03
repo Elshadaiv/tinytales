@@ -9,7 +9,7 @@ class CommunityService
   Future<List<CommunityEvent>> fetchLiveEvents(double latitude, double longitude) async
   {
     final url = Uri.parse(
-      'https://app.ticketmaster.com/discovery/v2/events.json?apikey=$apiKey&latlong=$latitude,$longitude&radius=25&unit=km&size=20',);
+      'https://app.ticketmaster.com/discovery/v2/events.json?apikey=$apiKey&latlong=$latitude,$longitude&radius=50&classificationName=family',);
 
     final response = await http.get(url);
     if (response.statusCode == 200)

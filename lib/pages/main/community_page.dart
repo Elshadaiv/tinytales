@@ -95,6 +95,34 @@ class _CommunityPageState extends State<CommunityPage> {
     }
   }
 
+  Future<void> loadEventsForMap(double latitude, double longitude) async
+  {
+    final liveEvents = await communityService.fetchLiveEvents(latitude, longitude);
+    setState(()
+    {
+      events = liveEvents.where((event)
+      {
+        return event.latitude != 0 && event.longitude != 0;
+      }).toList();
+    });
+  }
+
+  double calculateDistance(double eventLat, double eventLng)
+  {
+    if (userPosition == null)
+    {
+      return 0;
+    }
+    double distanceInMeters = Geolocator.distanceBetween(
+      userPosition!.latitude,
+      userPosition!.longitude,
+      eventLat,
+      eventLng,
+    );
+
+    return distanceInMeters / 1000;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -116,6 +144,14 @@ class _CommunityPageState extends State<CommunityPage> {
             initialCenter: LatLng(
               selectedEvent?.latitude ?? 53.3498, selectedEvent?.longitude ?? -6.2603,),
             initialZoom: 12,
+            onPositionChanged: (camera, hasGesture)
+            {
+              if (hasGesture)
+              {
+                final center = camera.center;
+                loadEventsForMap(center.latitude, center.longitude);
+              }
+            },
             minZoom: 3,
             maxZoom: 18,
           ),
@@ -154,6 +190,10 @@ class _CommunityPageState extends State<CommunityPage> {
           if (selectedEvent != null)
             CommunityInfoCard(
               event: selectedEvent!,
+              distance: calculateDistance(
+              selectedEvent!.latitude,
+              selectedEvent!.longitude,
+    ),
               onViewEvent:() async
               {
                 final url = Uri.parse(selectedEvent!.eventUrl);

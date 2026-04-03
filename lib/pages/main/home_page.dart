@@ -98,33 +98,14 @@ class HomePageState extends State<HomePage> {
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
                 children: [
-                  _summary("Last feed", lastFeed, Icons.restaurant),
-                  _summary("Last sleep", lastSleep, Icons.bedtime),
-                  _summary("Temperature", lastTemp, Icons.thermostat),
-                  _summary("Last Nappy",lastNappy,  Icons.baby_changing_station),
+                  _summary("Last feed", lastFeed, Icons.restaurant, "feed"),
+                  _summary("Last sleep", lastSleep, Icons.bedtime, "sleep"),
+                  _summary("Temperature", lastTemp, Icons.thermostat, "temperature"),
+                  _summary("Last Nappy", lastNappy, Icons.baby_changing_station, "nappy"),
                 ],
               ),
             ),
 
-            SizedBox(height: 12,),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: ()
-                {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => AnalyticsPage(),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                ),
-                child: Text("View Analytics"),
-              ),
-            ),
           ],
         ),
             ),
@@ -377,8 +358,19 @@ class HomePageState extends State<HomePage> {
 
 
 
-  Widget _summary(String title, String value, IconData icon) {
-    return Container(
+  Widget _summary(String title, String value, IconData icon, String type)
+  {
+    return GestureDetector(
+      onTap: ()
+      {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AnalyticsPage(type: type),
+          ),
+        );
+      },
+      child: Container(
       padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -405,7 +397,18 @@ class HomePageState extends State<HomePage> {
             value,
             style: TextStyle(fontSize: 13, color: Colors.black54),
           ),
+
+          SizedBox(height: 8),
+          Text(
+            "Tap for more info",
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.black,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
+      ),
       ),
     );
   }

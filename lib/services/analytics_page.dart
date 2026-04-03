@@ -6,7 +6,10 @@ import 'package:fl_chart/fl_chart.dart';
 
 class AnalyticsPage extends StatefulWidget
 {
-  AnalyticsPage({super.key});
+  final String type;
+  AnalyticsPage({super.key,
+  required this.type
+  });
 
   @override
   State<AnalyticsPage> createState() => _AnalyticsPageState();
@@ -17,12 +20,6 @@ class _AnalyticsPageState extends State<AnalyticsPage>
   String selectedMetric = "Feeding";
   String selectedRange = "7 Days";
 
-  final List<String> metrics = [
-    "Feeding",
-    "Sleep",
-    "Nappy",
-    "Temperature",
-  ];
 
   final List<String> ranges = [
     "7 Days",
@@ -50,6 +47,23 @@ class _AnalyticsPageState extends State<AnalyticsPage>
   void initState()
   {
     super.initState();
+
+    if (widget.type == "feed")
+    {
+      selectedMetric = "Feeding";
+    }
+    else if (widget.type == "sleep")
+    {
+      selectedMetric = "Sleep";
+    }
+    else if (widget.type == "nappy")
+    {
+      selectedMetric = "Nappy";
+    }
+    else if (widget.type == "temperature")
+    {
+      selectedMetric = "Temperature";
+    }
     _loadBabies();
   }
 
@@ -250,7 +264,7 @@ class _AnalyticsPageState extends State<AnalyticsPage>
       backgroundColor: Colors.grey[300],
       appBar: AppBar(backgroundColor: Colors.grey[300],
         title: Text(
-          "Analytics",
+          "$selectedMetric Analytics",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
@@ -387,21 +401,6 @@ class _AnalyticsPageState extends State<AnalyticsPage>
               ),
             ),
 
-            SizedBox(height: 16),
-
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: metrics.map((metric)
-                {
-                  return Padding(
-                    padding: EdgeInsets.only(right: 10),
-                    child: _metricButton(metric),
-                  );
-                }).toList(),
-              ),
-            ),
-            SizedBox(height: 16),
             SizedBox(height: 16),
 
           ],

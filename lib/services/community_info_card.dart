@@ -6,12 +6,14 @@ class CommunityInfoCard extends StatelessWidget
 {
   final CommunityEvent event;
   final VoidCallback onViewEvent;
+  final double distance;
 
   CommunityInfoCard(
       {
     super.key,
     required this.event,
     required this.onViewEvent,
+        required this.distance,
   });
 
   @override
@@ -82,6 +84,13 @@ class CommunityInfoCard extends StatelessWidget
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  '${distance.toStringAsFixed(1)} km away',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[700],
+                  ),
                 ),
                 SizedBox(height: 8),
                 SizedBox(
