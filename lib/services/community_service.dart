@@ -26,6 +26,39 @@ class CommunityService
             ? event['_embedded']['venues'][0]
             : null;
 
+        final title = (event['name'] ?? '').toString().toLowerCase();
+        final description = (event['info'] ?? '').toString().toLowerCase();
+        final classification = event['classifications'] != null &&
+            event['classifications'].isNotEmpty
+            ? (event['classifications'][0]['segment']?['name'] ?? '').toString().toLowerCase() : '';
+
+        final genre = event['classifications'] != null &&
+            event['classifications'].isNotEmpty ? (event['classifications'][0]['genre']?['name'] ?? '').toString().toLowerCase() : '';
+
+        final matchesKeyword =
+                title.contains('family') ||
+                title.contains('baby') ||
+                title.contains('parent') ||
+                title.contains('toddler') ||
+                title.contains('child') ||
+                title.contains('kids') ||
+                description.contains('family') ||
+                description.contains('baby') ||
+                description.contains('parent') ||
+                description.contains('toddler') ||
+                description.contains('child') ||
+                description.contains('kids');
+
+        final matchesCategory =
+                classification.contains('family') ||
+                genre.contains('family') ||
+                genre.contains('children') ||
+                genre.contains('education');
+
+        if (!matchesKeyword && !matchesCategory)
+        {
+          return null;
+        }
         return CommunityEvent(
           id: event['id'] ?? '',
           title: event['name'] ?? 'No title',
@@ -48,7 +81,7 @@ class CommunityService
           endDateTime: null,
           eventUrl: event['url'] ?? '',
         );
-      }).toList();
+      }).whereType<CommunityEvent>().toList();
     } else
     {
       throw Exception('There\s been an issue');

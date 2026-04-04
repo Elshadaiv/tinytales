@@ -1,9 +1,9 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:tinytales/pages/main/community_page.dart';
 import 'package:tinytales/pages/main/insights_page.dart';
 import 'package:tinytales/pages/main/profile_page.dart';
@@ -12,6 +12,8 @@ import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:tinytales/pages/main/milestone_page.dart';
 
 import '../../services/analytics_page.dart';
+import '../../services/community_event.dart';
+import '../../services/community_service.dart';
 
 
 
@@ -28,6 +30,9 @@ class HomePageState extends State<HomePage> {
   final user = FirebaseAuth.instance.currentUser;
   final db = FirebaseDatabase.instance.ref();
   final auth = FirebaseAuth.instance;
+
+  CommunityEvent? nearbyEvent;
+  CommunityService communityService = CommunityService();
 
   int currentPage = 0;
 
@@ -137,6 +142,32 @@ class HomePageState extends State<HomePage> {
   {
     super.initState();
     _loadBabies();
+    _loadNearbyEvent();
+  }
+
+  Future<void> _loadNearbyEvent() async
+  {
+    try
+    {
+      final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high,);
+
+      final events = await communityService.fetchLiveEvents(
+        position.latitude,
+        position.longitude,
+      );
+      if (events.isNotEmpty)
+      {
+        setState(()
+        {
+          nearbyEvent = events.first;
+        });
+        _showNearbyEventPopup(events.first);
+      }
+    }
+    catch(e)
+    {
+      print("Nearby event error: $e");
+    }
   }
 
 
@@ -411,6 +442,52 @@ class HomePageState extends State<HomePage> {
       ),
       ),
     );
+  }
+
+
+  void _showNearbyEventPopup(CommunityEvent event)
+  {
+    WidgetsBinding.instance.addPostFrameCallback((_)
+    {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.blueAccent,
+          duration: Duration(seconds: 9),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, 90),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          content: Row(
+            children: [
+              Icon(Icons.event, color: Colors.white),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  "Nearby Event: ${event.title}",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          action: SnackBarAction(
+            label: "VIEW",
+            textColor: Colors.white,
+            onPressed: ()
+            {
+              setState(()
+              {
+                currentPage = 3;
+              });
+            },
+          ),
+        ),
+      );
+    });
   }
 
 
