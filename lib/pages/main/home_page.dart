@@ -40,10 +40,17 @@ class HomePageState extends State<HomePage> {
   String lastSleep = "";
   String lastNappy = "";
   String lastTemp = "";
+  String smartAlertTitle = "";
+  String smartAlertMessage = "";
 
   List<Map<String, String>> babies = [];
   String? selectedBabyId;
   String selectedBabyName = "";
+
+  DateTime? lastFeedTime;
+  DateTime? lastNappyTime;
+  DateTime? lastSleepEndTime;
+  bool alertShown = false;
 
 
   List<Widget> get pages
@@ -68,7 +75,7 @@ class HomePageState extends State<HomePage> {
             else
               DropdownButton<String>(
                 value: selectedBabyId,
-                onChanged: (val)
+                onChanged: (val) async
                 {
                   if (val == null) return;
 
@@ -78,8 +85,17 @@ class HomePageState extends State<HomePage> {
                   setState(() {
                     selectedBabyId = val;
                     selectedBabyName = (picked["name"] ?? "").toString();
+
+                    lastFeedTime = null;
+                    lastNappyTime = null;
+                    lastSleepEndTime = null;
+
+                    smartAlertTitle = "";
+                    smartAlertMessage = "";
+                    alertShown = false;
                   });
-                  _homeSummary();
+                 await _homeSummary();
+                 await  _checkSmartCareAlert();
                 },
                 items: babies.map<DropdownMenuItem<String>>((baby)
                 {
@@ -198,6 +214,7 @@ class HomePageState extends State<HomePage> {
 
     });
     await _homeSummary();
+    await _checkSmartCareAlert();
   }
 
   Future<void> _homeSummary() async
@@ -236,6 +253,9 @@ class HomePageState extends State<HomePage> {
           return time;
         },
       );
+      lastFeedTime = await _latestLogTime(
+        "users/$userId/tracking/$babyId/feedings",
+      );
 
       final nappy = await _latestLog(
         path: "users/$userId/tracking/$babyId/nappies",
@@ -254,6 +274,9 @@ class HomePageState extends State<HomePage> {
           }
           return time;
         },
+      );
+      lastNappyTime = await _latestLogTime(
+        "users/$userId/tracking/$babyId/nappies",
       );
 
       final sleep = await _latestLog(
@@ -276,6 +299,11 @@ class HomePageState extends State<HomePage> {
 
           return "${h}h ${m}m";
         },
+      );
+
+      lastSleepEndTime = await _latestLogTime(
+        "users/$userId/tracking/$babyId/sleeps",
+        timeKey: "endTime",
       );
 
       final temp = await _latestLog(
@@ -385,6 +413,150 @@ class HomePageState extends State<HomePage> {
     final h = dt.hour.toString().padLeft(2, "0");
     final m = dt.minute.toString().padLeft(2, "0");
     return "$h:$m";
+  }
+
+  Future<DateTime?> _latestLogTime(
+      String path,
+      {
+        String timeKey = "time",
+      }) async
+  {
+    final snapshot = await db.child(path).get();
+    if (!snapshot.exists) return null;
+    final value = snapshot.value;
+
+    Map<dynamic, dynamic> raw = {};
+
+    if (value is List)
+    {
+      raw =
+      {
+        for (int i = 0; i < value.length; i++)
+          if (value[i] != null) i: value[i]
+      };
+    } else if (value is Map)
+    {
+      raw = value;
+    }
+
+    final entries = raw.values
+        .where((e) => e != null)
+        .map((e) => Map<String, dynamic>.from(e))
+        .where((e) => e[timeKey] != null)
+        .toList();
+
+    if (entries.isEmpty) return null;
+
+    entries.sort((a, b)
+    {
+      final at = DateTime.tryParse(a[timeKey].toString()) ?? DateTime(1970);
+      final bt = DateTime.tryParse(b[timeKey].toString()) ?? DateTime(1970);
+      return at.compareTo(bt);
+    });
+    return DateTime.tryParse(entries.last[timeKey].toString());
+  }
+
+  Future<void> _checkSmartCareAlert() async
+  {
+    final now = DateTime.now();
+
+    String title = "";
+    String message = "";
+
+    if (lastFeedTime != null)
+    {
+      final hoursSinceFeed = now.difference(lastFeedTime!).inHours;
+
+      if (hoursSinceFeed >= 4)
+      {
+        title = "TinyTales";
+        message = "Baby may be hungry. Last feed was ${hoursSinceFeed}h ago.";
+      }
+    }
+
+    if (title.isEmpty && lastNappyTime != null)
+    {
+      final hoursSinceNappy = now.difference(lastNappyTime!).inHours;
+
+      if (hoursSinceNappy >= 3)
+      {
+        title = "TinyTales";
+        message = "Baby may need a nappy change. Last change ${hoursSinceNappy}h ago.";
+      }
+    }
+
+    if (title.isEmpty && lastSleepEndTime != null)
+    {
+      final hoursAwake = now.difference(lastSleepEndTime!).inHours;
+
+      if (hoursAwake >= 2)
+      {
+        title = "TinyTales";
+        message = "Baby may be tired. Awake for ${hoursAwake}h.";
+      }
+    }
+
+    if (mounted)
+    {
+      setState(()
+      {
+        smartAlertTitle = title;
+        smartAlertMessage = message;
+        if (title.isEmpty)
+        {
+          alertShown = false;
+        }
+      });
+
+      if (title.isNotEmpty && message.isNotEmpty)
+      {
+        _showWarning();
+      }
+
+
+    }
+  }
+
+  void _showWarning()
+  {
+    if (!mounted) return;
+    showDialog(
+      context: context, barrierDismissible: false, builder: (context)
+      {
+
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(smartAlertTitle, style: TextStyle(fontWeight: FontWeight.w800),),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.warning_amber_rounded, size: 40, color: Colors.orange),
+              SizedBox(height: 10),
+              Text(
+                smartAlertMessage,
+                style: TextStyle(fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: ()
+              {
+                Navigator.of(context).pop();
+                setState(()
+                {
+                  currentPage = 2;
+                });
+              },
+              child: Text("Tracking"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
 
@@ -540,6 +712,11 @@ class HomePageState extends State<HomePage> {
               ],
                 onTabChange: (int index) {
                 if (index >= 0 && index < pages.length) {
+                  if (index == 0)
+                  {
+                    _homeSummary();
+                    _checkSmartCareAlert();
+                  }
                   setState(() {
                     currentPage = index;
                   });
