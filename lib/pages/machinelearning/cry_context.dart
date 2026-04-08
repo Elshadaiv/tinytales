@@ -70,7 +70,7 @@ class cry_context
   }) async
   {
     final feed = await _latestEntry(path: "users/$userId/tracking/$babyId/feedings", timeKey: "time",);
-    final sleep = await _latestEntry(path: "users/$userId/tracking/$babyId/sleep", timeKey: "endTime",);
+    final sleep = await _latestEntry(path: "users/$userId/tracking/$babyId/sleeps", timeKey: "endTime",);
     final nappy = await _latestEntry(path: "users/$userId/tracking/$babyId/nappies", timeKey: "time",);
 
     final feedMins = _minsSinceIso(feed?["time"]?.toString());
@@ -182,12 +182,20 @@ class cry_context
       final score = p["score"] is double ? p["score"] : (p["score"] as num).toDouble();
 
       double w = 1.0;
-      if (label.contains("hungry"))
-        w = hungryW;
-      else if (label.contains("tired"))
-        w = tiredW;
-      else if (label.contains("discomfort"))
-        w = discomfortW;
+
+      if (label.contains("pain"))
+      {
+        double contextReduce = 1.0;
+        if (feedMins >= 180)
+          contextReduce *= 0.85;
+        if (sleepMins >= 150)
+          contextReduce *= 0.85;
+        if (nappyMins >= 180)
+          contextReduce *= 0.85;
+        if (nappyType.contains("dirty"))
+          contextReduce *= 0.80;
+        w = contextReduce;
+      }
 
       final newScore = score * w;
       return
@@ -288,7 +296,6 @@ class cry_context
     required String nappyType,
   })
   {
-    String timeLine = "";
     int toHours(int mins)
     {
       if (mins < 0) return -1;
@@ -303,20 +310,17 @@ class cry_context
       if (feedMins >= 60)
       {
         final feedH = (feedMins / 60).floor();
-        timeLine = "since the baby hasn’t been fed in ${feedH} hours";
-        return "$timeLine, we’re $percent% confident this is a hungry cry.";
-      }
-      return "Everything up-to-date!";
+        return "Recent feeding history suggests hunger may be contributing to the crying. The last feeding was recorded ${feedH} hours ago.";      }
+      return "Recent tracking does not currently suggest a strong hunger-related pattern.";
     }
     if (lower.contains("tired"))
     {
       if (sleepMins >= 60)
       {
         final sleepH = (sleepMins / 60).floor();
-        timeLine = "since the baby hasn’t slept in ${sleepH} hours";
-        return "$timeLine, we’re $percent% confident this is a tired cry.";
+        return "Recent sleep history suggests tiredness may also be contributing to the crying. The baby has been awake for approximately ${sleepH} hours.";
       }
-      return "Everything up-to-date!";
+      return "Recent tracking does not currently suggest a strong tiredness-related pattern.";
     }
 
     if (lower.contains("discomfort"))
@@ -325,20 +329,15 @@ class cry_context
       {
         if (nappyType.contains("dirty"))
         {
-          timeLine = "since the last nappy was dirty and changed ${nappyH} hours ago";
+          return "Recent nappy history suggests discomfort may also be contributing to the crying. The last recorded nappy was dirty and was changed ${nappyH} hours ago.";
         }
         else
         {
-          timeLine = "since the last nappy change was ${nappyH} hours ago";
+          return "Recent nappy history suggests discomfort may also be contributing to the crying. The last recorded nappy change was ${nappyH} hours ago.";
         }
       }
-      else
-      {
-        timeLine = "based on nappy history";
-      }
-      return "$timeLine, we’re $percent% confident this is a discomfort/ pain cry";
     }
-    return "we’re $percent% confident this is $label.";
+    return "Recent tracking may provide additional context for this cry.";
   }
 
   Future<String> run({
@@ -386,16 +385,14 @@ class cry_context
       final top = boosted.isNotEmpty ? boosted.first : null;
       if (top != null)
       {
-        final String finalLabel = (contextPick.isNotEmpty && top["label"].toString().toLowerCase() != contextPick)
-            ? contextPick.substring(0, 1).toUpperCase() + contextPick.substring(1)
-            : top["label"].toString();
+        final String finalLabel = top["label"].toString();
 
         final int finalPercent = top["percent"] is int
             ? top["percent"] as int
             : int.tryParse(top["percent"].toString()) ?? 0;
 
         smartLine = _smartExplanation(
-          label: finalLabel,
+          label: contextPick,
           percent: finalPercent,
           feedMins: feedMins,
           sleepMins: sleepMins,

@@ -355,6 +355,20 @@ class _InsightsPageState extends State<InsightsPage>
 
       final pairs = await cry_Detection().predictProbFromFile(spectrogramPath);
 
+      final top = pairs.first;
+      final String topLabel = top["label"].toString();
+      final int topPercent = top["percent"] as int;
+
+      String headline = "";
+
+      if (topLabel == "pain")
+      {
+        headline = "Possible Pain Cry Detected — $topPercent%";
+      }
+      else
+      {
+        headline = "Non Pain Cry Likelihood — $topPercent%";
+      }
       String rawText = "";
 
       for (final p in pairs.take(2))
@@ -385,7 +399,13 @@ class _InsightsPageState extends State<InsightsPage>
       {
         title = "Results";
         body =
-        "From analysing this cry, we think:\n${rawText.trim()}\n\nFrom what we tracked:\n$trackedText";
+        "$headline\n\n"
+            "The sound pattern of this cry matches characteristics often associated with ${topLabel == "pain" ? "pain or strong discomfort" : "a lower likelihood of pain"}.\n\n"
+            "From recent tracking:\n$trackedText\n\n"
+            "If the baby continues crying, consider checking:\n"
+            "• Temperature\n"
+            "• Nappy Condition\n"
+            "• Signs of Illness or Discomfort";
       });
 
       return;
