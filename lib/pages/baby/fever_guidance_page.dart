@@ -27,6 +27,7 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
   bool loadingTemperature = false;
   DateTime? selectedBabyDob;
   int selectedBabyAgeMonths = 0;
+  String selectedBabyAgeText = "";
 
   @override
   void initState()
@@ -192,19 +193,62 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
     {
       selectedBabyDob = null;
       selectedBabyAgeMonths = 0;
+      selectedBabyAgeText = "";
       return;
     }
-    final baby = babies.firstWhere((b) => b["id"] == selectedBabyId,);
+    final baby = babies.firstWhere((b) => b["id"] == selectedBabyId);
     selectedBabyDob = _parseDob(baby["dob"]?.toString());
 
     if (selectedBabyDob != null)
     {
       selectedBabyAgeMonths = _calculateAgeInMonths(selectedBabyDob!);
+      selectedBabyAgeText = _formatBabyAge(selectedBabyDob!);
     }
     else
     {
       selectedBabyAgeMonths = 0;
     }
+  }
+
+  String _formatBabyAge(DateTime dob)
+  {
+    final now = DateTime.now();
+
+    int years = now.year - dob.year;
+    int months = now.month - dob.month;
+    int days = now.day - dob.day;
+
+    if (days < 0)
+    {
+      months--;
+    }
+    if (months < 0)
+    {
+      years--;
+      months += 12;
+    }
+    final totalDays = now.difference(dob).inDays;
+
+    if (totalDays < 7)
+    {
+      return "$totalDays day${totalDays == 1 ? "" : "s"} old";
+    }
+
+    if (totalDays < 60)
+    {
+      final weeks = (totalDays / 7).floor();
+      return "$weeks week${weeks == 1 ? "" : "s"} old";
+    }
+
+    if (years <= 0)
+    {
+      return "$months month${months == 1 ? "" : "s"} old";
+    }
+    if (months == 0)
+    {
+      return "$years year${years == 1 ? "" : "s"} old";
+    }
+    return "$years year${years == 1 ? "" : "s"} $months month${months == 1 ? "" : "s"} old";
   }
 
   Map<String, dynamic> _checkFever(double temp, int ageMonths)
@@ -276,6 +320,61 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
     };
   }
 
+  Future<Map<String, dynamic>> _checkMedicationSafety(String type) async
+  {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final snapshot = await FirebaseDatabase.instance
+        .ref()
+        .child("users/$userId/tracking/$selectedBabyId/medications")
+        .get();
+    if (!snapshot.exists)
+    {
+      return
+        {
+        "canGive": true,
+        "message": "$type can be given now.",
+      };
+    }
+    final data = Map<dynamic, dynamic>.from(snapshot.value as Map);
+    final now = DateTime.now();
+
+    final doseTimes = data.values
+        .where((e) => e["type"]?.toString().toLowerCase() == type.toLowerCase())
+        .map((e) => DateTime.tryParse(e["time"].toString()))
+        .whereType<DateTime>()
+        .toList();
+
+    doseTimes.sort((a, b) => b.compareTo(a));
+    final minGapHours = type == "Calpol" ? 4 : 6;
+    final maxDoses24h = type == "Calpol" ? 4 : 3;
+
+    final dosesLast24h = doseTimes.where((time) => now.difference(time).inHours < 24).length;
+    if (dosesLast24h >= maxDoses24h)
+    {
+      return {
+        "canGive": false,
+        "message": "Maximum $type doses reached in the last 24 hours.",
+      };
+    }
+    if (doseTimes.isNotEmpty)
+    {
+      final hoursSinceLastDose = now.difference(doseTimes.first).inHours;
+
+      if (hoursSinceLastDose < minGapHours)
+      {
+        final hoursLeft = minGapHours - hoursSinceLastDose;
+
+        return {
+          "canGive": false,
+          "message": "Wait $hoursLeft more hour${hoursLeft == 1 ? "" : "s"} before giving $type again.",
+        };
+      }
+    }
+    return {
+      "canGive": true,
+      "message": "$type can be given now.",
+    };
+  }
 
   Future<void> _logMedication (String type, String dose) async
   {
@@ -289,7 +388,16 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
         );
         return;
       }
+    final safety = await _checkMedicationSafety(type);
 
+    if (safety["canGive"] == false)
+    {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Cannot give $type right now. ${safety["message"]}"),        ),
+      );
+      return;
+    }
     final userId = FirebaseAuth.instance.currentUser!.uid;
     final ref = FirebaseDatabase.instance
     .ref()
@@ -529,7 +637,7 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
                   ),
                   SizedBox(height: 8),
                   Text(
-                    "Age : $selectedBabyAgeMonths months",
+                    "Age : $selectedBabyAgeText",
                     style: TextStyle(fontWeight: FontWeight.w600,
                     color: Colors.black87),
                   ),
