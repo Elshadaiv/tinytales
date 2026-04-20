@@ -84,7 +84,7 @@ class CommunityService
       }).whereType<CommunityEvent>().toList();
     } else
     {
-      throw Exception('There\s been an issue');
+      throw Exception('There\'s been an issue');
     }
   }
 }

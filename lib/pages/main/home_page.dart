@@ -498,6 +498,7 @@ class HomePageState extends State<HomePage> {
 
     if (mounted)
     {
+      final bool alertChanged = (title != smartAlertTitle) || (message != smartAlertMessage);
       setState(()
       {
         smartAlertTitle = title;
@@ -506,10 +507,15 @@ class HomePageState extends State<HomePage> {
         {
           alertShown = false;
         }
+        else if(alertChanged)
+          {
+            alertShown = false;
+          }
       });
 
-      if (title.isNotEmpty && message.isNotEmpty)
+      if (title.isNotEmpty && message.isNotEmpty && !alertShown)
       {
+        alertShown = true;
         _showWarning();
       }
 

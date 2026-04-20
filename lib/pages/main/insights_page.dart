@@ -194,6 +194,7 @@ class _InsightsPageState extends State<InsightsPage>
         title = "Recording";
         body = "We're currently listening...";
       });
+      await _cleanupTempFiles();
       final recordingPath = await _getRecordingPath();
 
       await recorder.start(
@@ -408,15 +409,44 @@ class _InsightsPageState extends State<InsightsPage>
             "• Signs of Illness or Discomfort";
       });
 
+      try
+      {
+        final specFile = File(spectrogramPath);
+        if (await specFile.exists())
+        {
+          await specFile.delete();
+        }
+      }
+      catch (e)
+      {
+      }
       return;
     }
-
     catch (e)
     {
       setState(()
       {
         title = "Error";
       });
+    }
+  }
+
+  Future<void> _cleanupTempFiles() async
+  {
+    try
+    {
+      if (recordedAudioPath != null)
+      {
+        final audio = File(recordedAudioPath!);
+        if (await audio.exists())
+        {
+          await audio.delete();
+        }
+        recordedAudioPath = null;
+      }
+    }
+    catch (e)
+    {
     }
   }
 

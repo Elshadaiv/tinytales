@@ -451,21 +451,6 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
               style: TextStyle(color: Colors.black54),
             ),
           if(status != "NORMAL") ...[
-            Text(
-              MedicationGuidance.calpol(selectedBabyAgeMonths),
-            style: TextStyle(fontWeight: FontWeight.w600,
-  ),
-    ),
-
-           SizedBox(height:6),
-  Text(
-    MedicationGuidance.nurofen(selectedBabyAgeMonths),
-    style: TextStyle(
-    fontWeight: FontWeight.w600,
-    ),
-  ),
-  SizedBox(height: 10,),
-
           if(selectedBabyAgeMonths <= 3)
              Text(
                   "Emergency, Babies under 3 months with fever should seek attention with a doctor.",

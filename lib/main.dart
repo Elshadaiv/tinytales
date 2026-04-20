@@ -1,5 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:tinytales/pages/authentication/auth_page.dart';
@@ -17,16 +18,19 @@ void main() async {
 
   await NotificationService.init();
   final plugin = FlutterLocalNotificationsPlugin();
-  await plugin
-      .resolvePlatformSpecificImplementation<//ios
-      IOSFlutterLocalNotificationsPlugin>()
-      ?.requestPermissions(alert: true, badge: true, sound: false);
 
-  final androidPlugin = plugin
-      .resolvePlatformSpecificImplementation<//android
-      AndroidFlutterLocalNotificationsPlugin>();
+  if (Platform.isIOS)
+  {
+    await plugin
+        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(alert: true, badge: true, sound: false);
+  }
+  else if (Platform.isAndroid)
+  {
+    final androidPlugin = plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
-  await androidPlugin?.requestNotificationsPermission();
+    await androidPlugin?.requestNotificationsPermission();
+  }
 
   runApp(const TinyTalesApp());
 }

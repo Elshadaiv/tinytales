@@ -41,9 +41,9 @@ class _ProfilePageState extends State<ProfilePage> {
     if (match == null) {
       return false;
     }
-    final day = int.parse(match.group(1)!);
-    final month = int.parse(match.group(2)!);
-    final year = int.parse(match.group(3)!);
+    final day = int.tryParse(match.group(1)!);
+    final month = int.tryParse(match.group(2)!);
+    final year = int.tryParse(match.group(3)!);
 
     if (day == null || month == null || year == null) {
       return false;
@@ -81,15 +81,15 @@ String hospital = newBabyHospitalController.text.trim();
 if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.isEmpty || hospital.isEmpty)
   {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please Enter all fields before uploading')
+      SnackBar(content: Text('Please Enter all fields before uploading')
       ),
     );
     return;
   }
 
-  if (!RegExp(r'^[0-9/.-]+$').hasMatch(dob)) {
+  if (!validDate(dob)) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Date of birth must contain numbers (e.g. 12/05/2024).')),
+      SnackBar(content: Text('Date of birth must contain numbers (e.g. 12/05/2024).')),
     );
     return;
   }
@@ -97,7 +97,7 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
   if(RegExp(r'[0-9]').hasMatch(name)) {
     ScaffoldMessenger.of(context).showSnackBar(
 
-      const SnackBar(
+       SnackBar(
           content: Text('Name cannot contain any numbers, try again!')
       ),
     );
