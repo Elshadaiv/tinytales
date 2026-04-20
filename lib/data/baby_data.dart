@@ -71,7 +71,7 @@ factory Immunisation.fromMap(Map<String, dynamic> map)
 
         name: map['name'],
 dates: List<String>.from(map['dates'] ?? []),
-      isGiven: map ['isGivem'] ?? false,
+      isGiven: map ['isGiven'] ?? false,
   );
 
 }

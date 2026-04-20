@@ -84,17 +84,8 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
         final now = DateTime.now();
 
         final ageMonths = (now.year - birthDate.year) * 12 + (now.month - birthDate.month);
-
-        final Map<int, List <String>> vaccinesSchedule =
-        {
-          2: ['6-in-1', 'PVC', 'Rotavirus', 'MenB'],
-          4: ['6-in-1', 'PVC','Rotavirus'],
-          6: ['6-in-1', 'MemB'],
-          12:['MMR', 'MenB', 'PVC'],
-          13:['Hib/MenC','PCV'],
-        };
         recommendedVaccines = [];
-        vaccinesSchedule.forEach((month, vaccines)
+        vaccineSchedule.forEach((month, vaccines)
         {
           if(ageMonths >= month && ageMonths < month + 2)
           {

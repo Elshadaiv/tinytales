@@ -79,6 +79,7 @@ class _milestone_pageState extends State<milestone_page>
     }
     final snapshot = await FirebaseFirestore.instance
         .collection("baby_profiles")
+        .where("userId", isEqualTo: user.uid)
         .get();
 
     babies = snapshot.docs.map((doc)
