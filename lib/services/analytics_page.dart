@@ -39,6 +39,18 @@ class _AnalyticsPageState extends State<AnalyticsPage>
   ];
   List<String> feedingLabels = [
   ];
+  List<FlSpot> sleepSpots = [
+  ];
+  List<String> sleepLabels = [
+  ];
+  List<FlSpot> nappySpots = [
+  ];
+  List<String> nappyLabels = [
+  ];
+  List<FlSpot> temperatureSpots = [
+  ];
+  List<String> temperatureLabels = [
+  ];
 
   bool isLoading = true;
 
@@ -88,7 +100,7 @@ class _AnalyticsPageState extends State<AnalyticsPage>
     if (babies.isNotEmpty)
     {
       selectedBabyId ??= babies.first["id"];
-      await _loadFeedingData();
+      await _loadSelectedMetric();
     }
 
     if (mounted)
@@ -109,10 +121,7 @@ class _AnalyticsPageState extends State<AnalyticsPage>
         {
           selectedMetric = label;
         });
-        if (label == "Feeding")
-        {
-          _loadFeedingData();
-        }
+        _loadSelectedMetric();
       },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -144,7 +153,7 @@ class _AnalyticsPageState extends State<AnalyticsPage>
         {
           selectedRange = label;
         });
-        await _loadFeedingData();
+        await _loadSelectedMetric();
       },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -255,6 +264,249 @@ class _AnalyticsPageState extends State<AnalyticsPage>
       });
     }
   }
+  Future<void> _loadSleepData() async
+  {
+    if (selectedBabyId == null)
+    {
+      return;
+    }
+    setState(() {
+      isLoading = true;
+    });
+
+    final userId = auth.currentUser!.uid;
+    final snapshot = await db.child("users/$userId/tracking/$selectedBabyId/sleeps").get();
+    sleepSpots = [];
+    sleepLabels = [];
+
+    if (snapshot.exists)
+    {
+      final data = snapshot.value;
+      Map<dynamic, dynamic> raw = {};
+
+      if (data is List)
+      {
+        raw = {
+          for (int i = 0; i < data.length; i++)
+            if (data[i] != null) i: data[i]
+        };
+      }
+      else if (data is Map)
+      {
+        raw = data;
+      }
+
+      final entries = raw.values.map((e) =>
+      {
+        "durationMinutes": e["durationMinutes"] ?? 0,
+        "endTime": e["endTime"],
+      })
+          .where((e) => e["endTime"] != null)
+          .toList();
+
+      entries.sort((a, b)
+      {
+        final at = DateTime.tryParse(a["endTime"].toString()) ?? DateTime(1970);
+        final bt = DateTime.tryParse(b["endTime"].toString()) ?? DateTime(1970);
+        return at.compareTo(bt);
+      });
+
+      List<Map<String, dynamic>> filtered = entries;
+      if (selectedRange == "7 Days" && entries.length > 7)
+      {
+        filtered = entries.sublist(entries.length - 7);
+      }
+      else if (selectedRange == "30 Days" && entries.length > 30)
+      {
+        filtered = entries.sublist(entries.length - 30);
+      }
+
+      for (int i = 0; i < filtered.length; i++)
+      {
+        final mins = filtered[i]["durationMinutes"] is int
+            ? filtered[i]["durationMinutes"]
+            : int.tryParse(filtered[i]["durationMinutes"].toString()) ?? 0;
+        final hours = mins / 60.0;
+        final time = DateTime.tryParse(filtered[i]["endTime"].toString());
+
+        sleepSpots.add(FlSpot(i.toDouble(), hours));
+        sleepLabels.add(time != null ? "${time.day}/${time.month}" : "${i + 1}");
+      }
+    }
+    if (mounted) setState(()
+    {
+      isLoading = false;
+    });
+  }
+
+  Future<void> _loadNappyData() async
+  {
+    if (selectedBabyId == null)
+    {
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    final userId = auth.currentUser!.uid;
+    final snapshot = await db.child("users/$userId/tracking/$selectedBabyId/nappies").get();
+
+    nappySpots = [];
+    nappyLabels = [];
+    if (snapshot.exists)
+    {
+      final data = snapshot.value;
+      Map<dynamic, dynamic> raw = {};
+
+      if (data is List)
+      {
+        raw = {
+          for (int i = 0; i < data.length; i++)
+            if (data[i] != null) i: data[i]
+        };
+      }
+      else if (data is Map)
+      {
+        raw = data;
+      }
+      final Map<String, int> perDay = {};
+
+      for (final v in raw.values)
+      {
+        if (v == null) continue;
+        final timeString = v["time"]?.toString();
+        if (timeString == null) continue;
+
+        final dt = DateTime.tryParse(timeString);
+        if (dt == null) continue;
+
+        final dayKey = "${dt.year}-${dt.month}-${dt.day}";
+        perDay[dayKey] = (perDay[dayKey] ?? 0) + 1;
+      }
+
+      final sortedKeys = perDay.keys.toList()..sort();
+
+      List<String> filteredKeys = sortedKeys;
+      if (selectedRange == "7 Days" && sortedKeys.length > 7)
+      {
+        filteredKeys = sortedKeys.sublist(sortedKeys.length - 7);
+      }
+      else if (selectedRange == "30 Days" && sortedKeys.length > 30)
+      {
+        filteredKeys = sortedKeys.sublist(sortedKeys.length - 30);
+      }
+
+      for (int i = 0; i < filteredKeys.length; i++)
+      {
+        final key = filteredKeys[i];
+        final parts = key.split("-");
+        final label = parts.length >= 3 ? "${parts[2]}/${parts[1]}" : key;
+        nappySpots.add(FlSpot(i.toDouble(), perDay[key]!.toDouble()));
+        nappyLabels.add(label);
+      }
+    }
+
+    if (mounted) setState(()
+    {
+      isLoading = false;
+    });
+  }
+
+  Future<void> _loadTemperatureData() async
+  {
+    if (selectedBabyId == null)
+    {
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    final userId = auth.currentUser!.uid;
+    final snapshot = await db.child("users/$userId/tracking/$selectedBabyId/temperatures").get();
+
+    temperatureSpots = [];
+    temperatureLabels = [];
+
+    if (snapshot.exists)
+    {
+      final data = snapshot.value;
+      Map<dynamic, dynamic> raw = {};
+
+      if (data is List)
+      {
+        raw = {
+          for (int i = 0; i < data.length; i++)
+            if (data[i] != null) i: data[i]
+        };
+      }
+      else if (data is Map)
+      {
+        raw = data;
+      }
+
+      final entries = raw.values.map((e) => {
+        "value": e["value"],
+        "time": e["time"],
+      })
+          .where((e) => e["time"] != null)
+          .toList();
+
+      entries.sort((a, b) {
+        final at = DateTime.tryParse(a["time"].toString()) ?? DateTime(1970);
+        final bt = DateTime.tryParse(b["time"].toString()) ?? DateTime(1970);
+        return at.compareTo(bt);
+      });
+
+      List<Map<String, dynamic>> filtered = entries;
+      if (selectedRange == "7 Days" && entries.length > 7)
+      {
+        filtered = entries.sublist(entries.length - 7);
+      }
+      else if (selectedRange == "30 Days" && entries.length > 30)
+      {
+        filtered = entries.sublist(entries.length - 30);
+      }
+
+      for (int i = 0; i < filtered.length; i++)
+      {
+        final value = double.tryParse(filtered[i]["value"].toString()) ?? 0;
+        final time = DateTime.tryParse(filtered[i]["time"].toString());
+
+        temperatureSpots.add(FlSpot(i.toDouble(), value));
+        temperatureLabels.add(time != null ? "${time.day}/${time.month}" : "${i + 1}");
+      }
+    }
+
+    if (mounted) setState(()
+    {
+      isLoading = false;
+    });
+  }
+
+
+  Future<void> _loadSelectedMetric() async
+  {
+    if (selectedMetric == "Feeding")
+    {
+      await _loadFeedingData();
+    }
+    else if (selectedMetric == "Sleep")
+    {
+      await _loadSleepData();
+    }
+    else if (selectedMetric == "Nappy")
+    {
+      await _loadNappyData();
+    }
+    else if (selectedMetric == "Temperature")
+    {
+      await _loadTemperatureData();
+    }
+  }
 
 
   @override
@@ -287,7 +539,7 @@ class _AnalyticsPageState extends State<AnalyticsPage>
                 {
                   selectedBabyId = val;
                 });
-                await _loadFeedingData();
+                await _loadSelectedMetric();
               },
               items: babies.map<DropdownMenuItem<String>>((baby)
               {
@@ -345,57 +597,9 @@ class _AnalyticsPageState extends State<AnalyticsPage>
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(16),
                     ),
-                      child: selectedMetric != "Feeding"
-                          ? Center(
-                        child: Text("No Graph yet", style:
-                        TextStyle(
-                            color: Colors.black54,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      )
-                    : isLoading
-                        ? Center(child: CircularProgressIndicator(color: Colors.purple),
-                    )
-                        : feedingSpots.isEmpty
-                        ? Center(
-                      child: Text("No feeding data yet", style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    )
-                        : Padding(
-                      padding: EdgeInsets.all(12),
-                      child: LineChart(
-                        LineChartData(
-                          gridData: FlGridData(show: true),
-                          borderData: FlBorderData(show: false),
-                          titlesData: FlTitlesData(
-                            topTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: false),),
-                            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false),),
-                            bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true, getTitlesWidget: (value, meta)
-                                {
-                                  final index = value.toInt();
-                                  if (index < 0 || index >= feedingLabels.length)
-                                  {
-                                    return SizedBox();
-                                  }
-                                  return Text(
-                                    feedingLabels[index], style: TextStyle(fontSize: 10),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                          lineBarsData: [
-                            LineChartBarData(
-                              spots: feedingSpots,
-                              isCurved: true, barWidth: 3, dotData: FlDotData(show: true),),
-                          ],
-                        ),
-                      ),
-                    ),
+                     child: isLoading
+                    ? Center(child: CircularProgressIndicator(color: Colors.purple))
+                          : _buildChartForMetric(),
                   ),
                 ],
               ),
@@ -403,6 +607,84 @@ class _AnalyticsPageState extends State<AnalyticsPage>
 
             SizedBox(height: 16),
 
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChartForMetric()
+  {
+    List<FlSpot> spots = [];
+    List<String> labels = [];
+    String emptyMessage = "";
+
+    if (selectedMetric == "Feeding")
+    {
+      spots = feedingSpots;
+      labels = feedingLabels;
+      emptyMessage = "No feeding data yet";
+    }
+    else if (selectedMetric == "Sleep")
+    {
+      spots = sleepSpots;
+      labels = sleepLabels;
+      emptyMessage = "No sleep data yet";
+    }
+    else if (selectedMetric == "Nappy")
+    {
+      spots = nappySpots;
+      labels = nappyLabels;
+      emptyMessage = "No nappy data yet";
+    }
+    else if (selectedMetric == "Temperature")
+    {
+      spots = temperatureSpots;
+      labels = temperatureLabels;
+      emptyMessage = "No temperature data yet";
+    }
+
+    if (spots.isEmpty)
+    {
+      return Center(
+        child: Text(
+          emptyMessage, style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: EdgeInsets.all(12),
+      child: LineChart(
+        LineChartData(
+          minY: selectedMetric == "Temperature" ? 34 : 0,
+          gridData: FlGridData(show: true),
+          borderData: FlBorderData(show: false),
+          titlesData: FlTitlesData(
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta)
+                {
+                  final index = value.toInt();
+                  if (index < 0 || index >= labels.length)
+                  {
+                    return SizedBox();
+                  }
+                  return Text(
+                    labels[index],
+                    style: TextStyle(fontSize: 10),
+                  );
+                },
+              ),
+            ),
+          ),
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots, isCurved: true, barWidth: 3, dotData: FlDotData(show: true),
+            ),
           ],
         ),
       ),
