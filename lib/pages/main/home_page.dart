@@ -10,6 +10,8 @@ import 'package:tinytales/pages/main/profile_page.dart';
 import 'package:tinytales/pages/main/tracking_page.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:tinytales/pages/main/milestone_page.dart';
+import 'dart:convert';
+
 
 import '../../services/analytics_page.dart';
 import '../../services/community_event.dart';
@@ -43,7 +45,7 @@ class HomePageState extends State<HomePage> {
   String smartAlertTitle = "";
   String smartAlertMessage = "";
 
-  List<Map<String, String>> babies = [];
+  List<Map<String, dynamic>> babies = [];
   String? selectedBabyId;
   String selectedBabyName = "";
 
@@ -55,19 +57,34 @@ class HomePageState extends State<HomePage> {
 
   List<Widget> get pages
   {
-    return [
-      Padding(
+    return[
+    RefreshIndicator(
+      onRefresh: () async
+      {
+        await _loadBabies();
+        await _homeSummary();
+        await _checkSmartCareAlert();
+      },
+      color: Colors.purple,
+      child: ListView(
         padding: EdgeInsets.all(16),
-        child: Column(
+        children: [
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 10),
         Row(
           children: [
-            Text(
-              "Welcome Back!",
+            if (babies.isNotEmpty) _babyAvatar(),
+            if (babies.isNotEmpty) SizedBox(width: 12),
+        Expanded(
+             child: Text(
+              babies.isEmpty
+              ? "Welcome Back!"
+              : "Hi, $selectedBabyName",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
             ),
+        ),
             Spacer(),
 
             if (babies.isEmpty)
@@ -80,7 +97,7 @@ class HomePageState extends State<HomePage> {
                   if (val == null) return;
 
                   final picked = babies.firstWhere(
-                        (b) => b["id"] == val, orElse: () => {"id": val, "name": ""},
+                        (b) => b["id"] == val, orElse: () => <String, dynamic>{"id": val, "name": ""},
                   );
                   setState(() {
                     selectedBabyId = val;
@@ -110,29 +127,25 @@ class HomePageState extends State<HomePage> {
 
             SizedBox(height: 16),
 
-            Expanded(
-              child: Column(
-                children: [
-                  Expanded(
-              child: GridView.count(
+            GridView.count(
                 crossAxisCount: 2,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                childAspectRatio: 1.1,
                 children: [
                   _summary("Last feed", lastFeed, Icons.restaurant, "feed"),
                   _summary("Last sleep", lastSleep, Icons.bedtime, "sleep"),
                   _summary("Temperature", lastTemp, Icons.thermostat, "temperature"),
                   _summary("Last Nappy", lastNappy, Icons.baby_changing_station, "nappy"),
                 ],
-              ),
             ),
-
           ],
         ),
-            ),
         ],
       ),
-      ),
+    ),
       InsightsPage(),
       TrackingPage(),
       CommunityPage(),
@@ -196,12 +209,15 @@ class HomePageState extends State<HomePage> {
         .where("userId", isEqualTo: userId)
         .get();
 
-    babies = snapshot.docs.map((doc)
+    babies = snapshot.docs.map<Map<String, dynamic>>((doc)
     {
+      final data = doc.data();
       return
         {
           "id": doc.id,
           "name": doc.get("name").toString(),
+          "dob": (data["dob"] ?? "").toString(),
+          "imageBase64": (data["imageBase64"] ?? "").toString(),
         };
     }).toList();
     if (babies.isNotEmpty)
@@ -239,16 +255,30 @@ class HomePageState extends State<HomePage> {
         path: "users/$userId/tracking/$babyId/feedings",
         labelBuilder: (data)
         {
-          final amount = (data["amount"] ?? "").toString();
           final time = _formatIsoTime(data["time"]);
+          final type = (data["type"] ?? "bottle").toString();
+          String summary = "";
 
-          if (amount.isNotEmpty && time.isNotEmpty)
+          if (type == "breast")
           {
-            return "$amount ml at $time";
+            final side = (data["side"] ?? "").toString();
+            final mins = data["durationMinutes"] ?? 0;
+            summary = "Breast ($side) ${mins}m";
           }
-          if (amount.isNotEmpty)
+          else if (type == "solids")
           {
-            return "$amount ml";
+            final food = (data["food"] ?? "").toString();
+            summary = "Solids: $food";
+          }
+          else
+          {
+            final amount = (data["amount"] ?? "").toString();
+            summary = "$amount ml";
+          }
+
+          if ( time.isNotEmpty)
+          {
+            return "$summary at $time";
           }
           return time;
         },
@@ -666,6 +696,24 @@ class HomePageState extends State<HomePage> {
         ),
       );
     });
+  }
+
+  Widget _babyAvatar()
+  {
+    final baby = babies.firstWhere((b) => b["id"] == selectedBabyId, orElse: () => <String, dynamic>{},);
+
+    final imageBase64 = (baby["imageBase64"] ?? "").toString();
+
+    return CircleAvatar(
+      radius: 24,
+      backgroundColor: Colors.purple.shade100,
+      backgroundImage: imageBase64.isNotEmpty
+          ? MemoryImage(base64Decode(imageBase64))
+          : null,
+      child: imageBase64.isEmpty
+          ? Icon(Icons.child_care, color: Colors.purple, size: 24)
+          : null,
+    );
   }
 
 
