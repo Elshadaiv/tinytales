@@ -88,6 +88,23 @@ class _AddSleepFormState extends State<AddSleepForm>
       return;
     }
 
+    final durationMinutes = _endTime!.difference(_startTime!).inMinutes;
+    if (durationMinutes > 24 * 60)
+    {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Sleep longer than 24 hours is not allowed. Please check the times.")),
+      );
+      return;
+    }
+
+    if (_endTime!.isAfter(DateTime.now().add(Duration(minutes: 5))))
+    {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("End time cannot be in the future.")),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     await widget.onSubmit(_startTime!, _endTime!, notesController.text.trim());

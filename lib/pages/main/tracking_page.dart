@@ -67,18 +67,13 @@ class _TrackingPageState extends State<TrackingPage> {
   Future<void> addFeeding(
       {
     required String babyId,
-    required int amount,
-    required DateTime time,
+    required Map<String, dynamic> entry,
   }) async
   {
     final userId = _auth.currentUser!.uid;
 
     final ref = _db.child("users/$userId/tracking/$babyId/feedings").push();
-    await ref.set(
-        {
-      "amount": amount,
-      "time": time.toIso8601String(),
-    });
+    await ref.set(entry);
   }
 
   Future<void> addNappy(
@@ -205,13 +200,12 @@ class _TrackingPageState extends State<TrackingPage> {
           ),
           child: AddFeedingForm(
             parentContext: context,
-            onSubmit: (amount, time)
+            onSubmit: (entry)
             async
             {
               await addFeeding(
                 babyId: selectedBabyId!,
-                amount: amount,
-                time: time,
+                entry: entry
               );
             },
           ),
@@ -436,8 +430,12 @@ class _TrackingPageState extends State<TrackingPage> {
 
                           final entries = raw.values.map((e) =>
                           {
+                            "type": e["type"],
                             "amount": e["amount"],
                             "time": e["time"],
+                            "durationMinutes": e["durationMinutes"],
+                            "food": e["food"],
+                            "side": e["side"],
                           })
                               .where((e) => e["time"] != null)
                               .toList();
@@ -453,14 +451,31 @@ class _TrackingPageState extends State<TrackingPage> {
                               .compareTo(DateTime.parse(b["time"]!)));
 
                           final latest = entries.last;
-                          final amount = latest["amount"];
                           final timeString = latest["time"]!;
                           final time = DateTime.tryParse(timeString);
 
                           final formatted = time != null ? "${time.hour}:${time.minute.toString().padLeft(2, '0')}" : "Unknown";
+                          final type = (latest["type"] ?? "bottle").toString();
+                          String summary = "";
 
+                          if (type == "breast")
+                          {
+                            final side = (latest["side"] ?? "").toString();
+                            final mins = latest["durationMinutes"] ?? 0;
+                            summary = "Breast ($side) ${mins}m";
+                          }
+                          else if (type == "solids")
+                          {
+                            final food = (latest["food"] ?? "").toString();
+                            summary = "Solids: $food";
+                          }
+                          else
+                          {
+                            final amount = latest["amount"] ?? "";
+                            summary = "$amount ml";
+                          }
                           return Text(
-                            "$amount ml at $formatted",
+                            "$summary at $formatted",
                             style:  TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 16,

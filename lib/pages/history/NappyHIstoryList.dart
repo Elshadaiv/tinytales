@@ -45,7 +45,7 @@ class NappyHistoryList extends StatelessWidget {
           {
             "type": e["type"],
             "time": e["time"],
-            "colour": e["color"] ?? "",
+            "color": e["color"] ?? "",
             "notes": e["notes"] ?? "",
           }).toList();
 
@@ -85,7 +85,7 @@ class NappyHistoryList extends StatelessWidget {
 
                     Text("Time: $formatted"),
                     if (item["colour"].toString().isNotEmpty)
-                      Text("Colour: ${item["colour"]}"),
+                      Text("Colour: ${item["color"]}"),
 
                     if (item["notes"].toString().isNotEmpty)
                       Text("Notes: ${item["notes"]}"),

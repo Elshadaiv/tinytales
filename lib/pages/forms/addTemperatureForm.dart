@@ -46,6 +46,25 @@ class _AddTemperatureFormState extends State<AddTemperatureForm>
       return;
     }
 
+    if (value < 35.0)
+    {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("This temperature is very low. Please contact a doctor immediately."),
+          duration: Duration(seconds: 6),
+        ),
+      );
+    }
+    else if (value >= 40.0)
+    {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("This is a very high temperature. Please seek medical advice."),
+          duration: Duration(seconds: 6),
+        ),
+      );
+    }
+
     setState(() => _isSaving = true);
 
     await widget.onSubmit(value, time);

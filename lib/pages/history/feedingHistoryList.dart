@@ -47,6 +47,10 @@ class FeedingHistoryList extends StatelessWidget {
           return {
             "key": e.key,
             "amount": e.value["amount"],
+            "type": e.value["type"],
+            "side": e.value["side"],
+            "durationMinutes": e.value["durationMinutes"],
+            "food": e.value["food"],
             "time": dt,
             "dateOnly": DateTime(dt.year, dt.month, dt.day),
           };
@@ -114,6 +118,28 @@ class FeedingHistoryList extends StatelessWidget {
     return DateFormat("dd MMM yyyy").format(day);
   }
 
+  String _summaryFor(Map<String, dynamic> item)
+  {
+    final type = (item["type"] ?? "bottle").toString();
+
+    if (type == "breast")
+    {
+      final side = (item["side"] ?? "").toString();
+      final mins = item["durationMinutes"] ?? 0;
+      return "Breast ($side) ${mins}m";
+    }
+    else if (type == "solids")
+    {
+      final food = (item["food"] ?? "").toString();
+      return "Solids: $food";
+    }
+    else
+    {
+      final amount = item["amount"] ?? "";
+      return "$amount ml";
+    }
+  }
+
   Widget _buildEntryCard(Map<String, dynamic> item, BuildContext context) {
     final dt = item["time"] as DateTime;
     final formatted = "${dt.hour}:${dt.minute.toString().padLeft(2, '0')}";
@@ -157,7 +183,7 @@ class FeedingHistoryList extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("${item["amount"]} ml",
+            Text(_summaryFor(item),
                 style:
                 const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             Text(formatted, style: TextStyle(color: Colors.grey.shade700),
