@@ -348,10 +348,17 @@ class _TrackingPageState extends State<TrackingPage> {
     return Scaffold(
       backgroundColor: Colors.grey[300],
       appBar: AppBar(backgroundColor: Colors.grey[300]),
-      body: Padding(
+        body: RefreshIndicator(
+          onRefresh: () async
+          {
+            await loadBabies();
+          },
+          color: Colors.purple,
+      child: Padding(
         padding:  EdgeInsets.all(16.0),
         child: SingleChildScrollView(
-        child: Column(
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             DropdownButton<String>(
@@ -1012,6 +1019,7 @@ class _TrackingPageState extends State<TrackingPage> {
           ],
         ),
       ),
+    ),
     ),
     );
   }

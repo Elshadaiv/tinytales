@@ -521,6 +521,32 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(12),
+              margin: EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade100,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.amber.shade700),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.amber.shade900),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      "If you are worried, contact your GP, public health nurse, or call 112 or 999 in an emergency.",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.amber.shade900,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             if (babies.isEmpty)
               Container(
                 width: double.infinity,
