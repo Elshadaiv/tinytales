@@ -87,147 +87,6 @@ class cry_context
       };
   }
 
-  List<Map<String, dynamic>> _boostWithContext({
-    required List<Map<String, dynamic>> modelPairs,
-    required Map<String, dynamic> ctx,
-    required String boostMode,
-  })
-  {
-    if (modelPairs.isEmpty)
-    {
-      return modelPairs;
-    }
-
-    final int feedMins = ctx["minsSinceFeed"] is int
-        ? ctx["minsSinceFeed"] : -1;
-    final int sleepMins = ctx["minsSinceSleep"] is int
-        ? ctx["minsSinceSleep"] : -1;
-    final int nappyMins = ctx["minsSinceNappy"] is int
-        ? ctx["minsSinceNappy"] : -1;
-    final String nappyType = (ctx["nappyType"] ?? "").toString();
-
-    double hungryW = 1.0;
-    double tiredW = 1.0;
-    double discomfortW = 1.0;
-
-    if (feedMins >= 900)
-      hungryW *= 4.20;
-    else if (feedMins >= 720)
-      hungryW *= 2.70;
-    else if (feedMins >= 600)
-      hungryW *= 2.40;
-    else if (feedMins >= 480)
-      hungryW *= 2.10;
-    else if (feedMins >= 360)
-      hungryW *= 1.85;
-    else if (feedMins >= 240)
-      hungryW *= 1.65;
-    else if (feedMins >= 180)
-      hungryW *= 1.45;
-    else if (feedMins >= 120)
-      hungryW *= 1.20;
-
-    if (sleepMins >= 210)
-      tiredW *= 3.50;
-    else if (sleepMins >= 150)
-      tiredW *= 2.35;
-    else if (sleepMins >= 90)
-      tiredW *= 2.00;
-
-    if (nappyMins >= 900)
-      discomfortW *= 4.20;
-    else if (nappyMins >= 720)
-      discomfortW *= 2.70;
-    else if (nappyMins >= 600)
-      discomfortW *= 2.40;
-    else if (nappyMins >= 480)
-      discomfortW *= 2.10;
-    else if (nappyMins >= 360)
-      discomfortW *= 1.85;
-    else if (nappyMins >= 240)
-      discomfortW *= 1.65;
-    else if (nappyMins >= 180)
-      discomfortW *= 1.45;
-    else if (nappyMins >= 120)
-      discomfortW *= 1.20;
-
-    if (nappyType.contains("dirty"))
-      discomfortW *= 1.15;
-
-    if (boostMode == "hungry")
-    {
-      tiredW = 1.0;
-      discomfortW = 1.0;
-    }
-    else if (boostMode == "tired")
-    {
-      hungryW = 1.0;
-      discomfortW = 1.0;
-    }
-    else if (boostMode == "discomfort")
-    {
-      hungryW = 1.0;
-      tiredW = 1.0;
-    }
-    else
-    {
-      hungryW = 1.0;
-      tiredW = 1.0;
-      discomfortW = 1.0;
-    }
-
-    final boosted = modelPairs.map((p)
-    {
-      final label = p["label"].toString().toLowerCase();
-      final score = p["score"] is double ? p["score"] : (p["score"] as num).toDouble();
-
-      double w = 1.0;
-
-      if (label.contains("pain"))
-      {
-        double contextReduce = 1.0;
-        if (feedMins >= 180)
-          contextReduce *= 0.85;
-        if (sleepMins >= 150)
-          contextReduce *= 0.85;
-        if (nappyMins >= 180)
-          contextReduce *= 0.85;
-        if (nappyType.contains("dirty"))
-          contextReduce *= 0.80;
-        w = contextReduce;
-      }
-
-      final newScore = score * w;
-      return
-        {
-          "label": p["label"],
-          "score": newScore,
-        };
-    }).toList();
-    double sum = 0.0;
-    for (final p in boosted)
-    {
-      sum += (p["score"] as double);
-    }
-    if (sum <= 0)
-    {
-      return modelPairs;
-    }
-
-    final out = boosted.map((p)
-    {
-      final s = (p["score"] as double) / sum;
-      return
-        {
-          "label": p["label"],
-          "score": s,
-          "percent": (s * 100).round(),
-        };
-    }).toList();
-    out.sort((a, b) => (b["score"] as double).compareTo(a["score"] as double));
-    return out;
-  }
-
   String _pickContextLabel({
     required int feedMins,
     required int sleepMins,
@@ -245,7 +104,7 @@ class cry_context
       hungryScore = 3;
     else if (feedMins >= 360)
       hungryScore = 2;
-    else if (feedMins >= 180)
+    else if (feedMins >= 120)
       hungryScore = 1;
 
     int tiredScore = 0;
@@ -253,7 +112,7 @@ class cry_context
       tiredScore = 3;
     else if (sleepMins >= 150)
       tiredScore = 2;
-    else if (sleepMins >= 90)
+    else if (sleepMins >= 60)
       tiredScore = 1;
 
     int discomfortScore = 0;
@@ -263,7 +122,7 @@ class cry_context
       discomfortScore = 3;
     else if (nappyMins >= 150)
       discomfortScore = 2;
-    else if (nappyMins >= 90)
+    else if (nappyMins >= 60)
       discomfortScore = 1;
 
     if (discomfortScore > bestScore)
@@ -294,10 +153,8 @@ class cry_context
     required int sleepMins,
     required int nappyMins,
     required String nappyType,
-  })
-  {
-    int toHours(int mins)
-    {
+  }) {
+    int toHours(int mins) {
       if (mins < 0) return -1;
       return (mins / 60).floor();
     }
@@ -325,19 +182,74 @@ class cry_context
 
     if (lower.contains("discomfort"))
     {
-      if (nappyH >= 0)
+      if (nappyType.contains("dirty") && nappyMins >= 30)
       {
-        if (nappyType.contains("dirty"))
-        {
-          return "Recent nappy history suggests discomfort may also be contributing to the crying. The last recorded nappy was dirty and was changed ${nappyH} hours ago.";
-        }
-        else
-        {
-          return "Recent nappy history suggests discomfort may also be contributing to the crying. The last recorded nappy change was ${nappyH} hours ago.";
-        }
+        return "Recent nappy history suggests discomfort may also be contributing to the crying. The last recorded nappy was dirty and was changed ${nappyH} hours ago.";
       }
+      if (nappyMins >= 180)
+      {
+        return "Recent nappy history suggests discomfort may also be contributing to the crying. The last recorded nappy change was ${nappyH} hours ago.";
+      }
+      return "Recent tracking does not currently suggest a strong discomfort-related pattern.";
     }
     return "Recent tracking may provide additional context for this cry.";
+  }
+
+  Future<Map<String, dynamic>> analyseNonPainContext({
+    required String userId,
+    required String babyId,
+  }) async
+  {
+    final contextData = await _getTrackingContext(
+      userId: userId,
+      babyId: babyId,
+    );
+
+    final int feedMins = contextData["minsSinceFeed"] is int
+        ? contextData["minsSinceFeed"]
+        : -1;
+
+    final int sleepMins = contextData["minsSinceSleep"] is int
+        ? contextData["minsSinceSleep"]
+        : -1;
+
+    final int nappyMins = contextData["minsSinceNappy"] is int
+        ? contextData["minsSinceNappy"]
+        : -1;
+
+    final String nappyType =
+    (contextData["nappyType"] ?? "").toString().toLowerCase();
+
+    final String cause = _pickContextLabel(
+      feedMins: feedMins,
+      sleepMins: sleepMins,
+      nappyMins: nappyMins,
+      nappyType: nappyType,
+    );
+
+    if (cause.isEmpty)
+    {
+      return {
+        "hasContext": false,
+        "cause": "",
+        "message": "",
+      };
+    }
+
+    final String message = _smartExplanation(
+      label: cause,
+      percent: 0,
+      feedMins: feedMins,
+      sleepMins: sleepMins,
+      nappyMins: nappyMins,
+      nappyType: nappyType,
+    );
+
+    return {
+      "hasContext": true,
+      "cause": cause,
+      "message": message,
+    };
   }
 
   Future<String> run({
@@ -347,64 +259,21 @@ class cry_context
     required List<Map<String, dynamic>> modelPairs,
   }) async
   {
-    final contextData = await _getTrackingContext(
+    if (modelPairs.isNotEmpty &&
+        modelPairs.first["label"].toString().toLowerCase() == "pain")
+    {
+      return "";
+    }
+
+    final result = await analyseNonPainContext(
       userId: userId,
       babyId: babyId,
     );
 
-    final int feedMins = contextData["minsSinceFeed"] is int ? contextData["minsSinceFeed"] : -1;
-    final int sleepMins = contextData["minsSinceSleep"] is int ? contextData["minsSinceSleep"] : -1;
-    final int nappyMins = contextData["minsSinceNappy"] is int ? contextData["minsSinceNappy"] : -1;
-    final String nappyType = (contextData["nappyType"] ?? "").toString().toLowerCase();
-
-    final String contextPick = _pickContextLabel(
-      feedMins: feedMins,
-      sleepMins: sleepMins,
-      nappyMins: nappyMins,
-      nappyType: nappyType,
-    );
-
-    final bool allowBoost = contextPick.isNotEmpty;
-
-    String rawText = "";
-    for (final p in modelPairs.take(2))
+    if (result["hasContext"] == true)
     {
-      rawText = "$rawText${p["label"]}: ${p["percent"]}%\n";
+      return result["message"].toString();
     }
 
-    String smartLine = "Everything up-to-date!";
-
-    if (allowBoost)
-    {
-      final boosted = _boostWithContext(
-        modelPairs: modelPairs,
-        ctx: contextData,
-        boostMode: contextPick,
-      );
-
-      final top = boosted.isNotEmpty ? boosted.first : null;
-      if (top != null)
-      {
-        final String finalLabel = top["label"].toString();
-
-        final int finalPercent = top["percent"] is int
-            ? top["percent"] as int
-            : int.tryParse(top["percent"].toString()) ?? 0;
-
-        smartLine = _smartExplanation(
-          label: contextPick,
-          percent: finalPercent,
-          feedMins: feedMins,
-          sleepMins: sleepMins,
-          nappyMins: nappyMins,
-          nappyType: nappyType,
-        );
-      }
-    }
-    else
-    {
-      smartLine = "Everything up-to-date!";
-    }
-    return smartLine;
-  }
-}
+    return "Everything up-to-date!";
+  }}

@@ -68,5 +68,174 @@
     "latitude": 53.6100,
     "longitude": -6.1820,
     "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
-  }
-]
+  },
+    {
+      "name": "Leixlip Youth and Community Centre",
+      "address": "Captains Hill, Leixlip, Co. Kildare",
+      "latitude": 53.3650,
+      "longitude": -6.4870,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Athy Family Resource Centre",
+      "address": "Athy, Co. Kildare",
+      "latitude": 52.9920,
+      "longitude": -6.9860,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Newbridge Family Resource Centre",
+      "address": "Newbridge, Co. Kildare",
+      "latitude": 53.1830,
+      "longitude": -6.8000,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Cork City Partnership",
+      "address": "Cork City, Co. Cork",
+      "latitude": 51.8985,
+      "longitude": -8.4756,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Carrigtwohill Family Resource Centre",
+      "address": "Carrigtwohill, Co. Cork",
+      "latitude": 51.9050,
+      "longitude": -8.2650,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Mayfield Family Resource Centre",
+      "address": "Mayfield, Cork",
+      "latitude": 51.9100,
+      "longitude": -8.4350,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Ballyphehane Family Resource Centre",
+      "address": "Ballyphehane, Cork",
+      "latitude": 51.8830,
+      "longitude": -8.4800,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Mallow Family Resource Centre",
+      "address": "Mallow, Co. Cork",
+      "latitude": 52.1350,
+      "longitude": -8.6400,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Galway Family Resource Centre",
+      "address": "Galway City, Co. Galway",
+      "latitude": 53.2707,
+      "longitude": -9.0568,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Bru Bhride Family Resource Centre",
+      "address": "Tuam, Co. Galway",
+      "latitude": 53.5150,
+      "longitude": -8.8520,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Ballinfoile Castlegar Neighbourhood Centre",
+      "address": "Headford Road, Galway, H91 PN50",
+      "latitude": 53.3000,
+      "longitude": -9.0640,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Limerick Family Resource Centre",
+      "address": "Limerick City, Co. Limerick",
+      "latitude": 52.6638,
+      "longitude": -8.6267,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Southill Family Resource Centre",
+      "address": "Southill, Limerick",
+      "latitude": 52.6470,
+      "longitude": -8.6120,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Moyross Family Resource Centre",
+      "address": "Moyross, Limerick",
+      "latitude": 52.6820,
+      "longitude": -8.6500,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Waterford Family Resource Centre",
+      "address": "Waterford City, Co. Waterford",
+      "latitude": 52.2593,
+      "longitude": -7.1101,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Ferrybank Family Resource Centre",
+      "address": "Ferrybank, Waterford",
+      "latitude": 52.2680,
+      "longitude": -7.1020,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Dundalk Counselling Service",
+      "address": "Seatown Place, Dundalk, Co. Louth",
+      "latitude": 54.0017,
+      "longitude": -6.4050,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Drogheda Family Resource Centre",
+      "address": "Drogheda, Co. Louth",
+      "latitude": 53.7189,
+      "longitude": -6.3478,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Navan Family Resource Centre",
+      "address": "Navan, Co. Meath",
+      "latitude": 53.6525,
+      "longitude": -6.6816,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Sligo Family Resource Centre",
+      "address": "Sligo Town, Co. Sligo",
+      "latitude": 54.2697,
+      "longitude": -8.4694,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Raphoe Springboard Family Resource Centre",
+      "address": "Raphoe, Co. Donegal",
+      "latitude": 54.8720,
+      "longitude": -7.5930,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Letterkenny Family Resource Centre",
+      "address": "Letterkenny, Co. Donegal",
+      "latitude": 54.9500,
+      "longitude": -7.7340,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Wexford Family Resource Centre",
+      "address": "Wexford Town, Co. Wexford",
+      "latitude": 52.3369,
+      "longitude": -6.4633,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    },
+    {
+      "name": "Kilkenny Family Resource Centre",
+      "address": "Kilkenny City, Co. Kilkenny",
+      "latitude": 52.6541,
+      "longitude": -7.2448,
+      "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+    }
+  ]
+

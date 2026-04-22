@@ -389,20 +389,52 @@ class _InsightsPageState extends State<InsightsPage>
         return;
       }
 
-      final trackedText = await engine.run(
+      final nonPainContext = topLabel == "non-pain"
+          ? await engine.analyseNonPainContext(
         userId: user.uid,
         babyId: selectedBabyId!,
-        assetPath: spectrogramPath,
-        modelPairs: pairs,
-      );
+      )
+          : {
+        "hasContext": false,
+        "cause": "",
+        "message": "",
+      };
 
       setState(()
       {
         title = "Results";
+
+        final bool hasRealTracking = nonPainContext["hasContext"] == true;
+        final String cause = (nonPainContext["cause"] ?? "").toString();
+        final String trackedText = (nonPainContext["message"] ?? "").toString();
+
+        String modelLine = "";
+
+        if (topLabel == "pain")
+        {
+          modelLine = "The sound pattern of this cry matches characteristics often associated with pain or strong discomfort.";
+        }
+        else if (cause == "hungry")
+        {
+          modelLine = "This cry may be linked to hunger rather than pain.";
+        }
+        else if (cause == "tired")
+        {
+          modelLine = "This cry may be linked to tiredness rather than pain.";
+        }
+        else if (cause == "discomfort")
+        {
+          modelLine = "This cry may be linked to discomfort rather than pain.";
+        }
+        else
+        {
+          modelLine = "This cry is unlikely to indicate pain.";        }
         body =
         "$headline\n\n"
-            "The sound pattern of this cry matches characteristics often associated with ${topLabel == "pain" ? "pain or strong discomfort" : "a lower likelihood of pain"}.\n\n"
-            "From recent tracking:\n$trackedText\n\n"
+            "$modelLine\n\n"
+            "${hasRealTracking
+            ? "From recent tracking:\n$trackedText\n\n"
+            : ""}"
             "If the baby continues crying, consider checking:\n"
             "• Temperature\n"
             "• Nappy Condition\n"
