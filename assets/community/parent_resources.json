@@ -1,0 +1,72 @@
+[
+  {
+    "name": "Ballymun Family Resource Centre",
+    "address": "Ballymun, Dublin 9",
+    "latitude": 53.3960,
+    "longitude": -6.2640,
+    "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+  },
+  {
+    "name": "An Cosán Family Resource Centre",
+    "address": "Jobstown, Tallaght, Dublin 24",
+    "latitude": 53.2850,
+    "longitude": -6.3920,
+    "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+  },
+  {
+    "name": "Cabra Family Community Development Group",
+    "address": "Faussagh Avenue, Cabra, Dublin 7",
+    "latitude": 53.3720,
+    "longitude": -6.2960,
+    "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+  },
+  {
+    "name": "Finglas Family Resource Centre",
+    "address": "Finglas, Dublin 11",
+    "latitude": 53.3900,
+    "longitude": -6.2970,
+    "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+  },
+  {
+    "name": "Hill Street Family Resource Centre",
+    "address": "Hill Street, Dublin 1",
+    "latitude": 53.3550,
+    "longitude": -6.2610,
+    "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+  },
+  {
+    "name": "Blanchardstown Family Support",
+    "address": "Blanchardstown, Dublin 15",
+    "latitude": 53.3860,
+    "longitude": -6.3770,
+    "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+  },
+  {
+    "name": "Clondalkin Behavioural Initiative",
+    "address": "Clondalkin, Dublin 22",
+    "latitude": 53.3200,
+    "longitude": -6.3950,
+    "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+  },
+  {
+    "name": "Dun Laoghaire Family Resource Centre",
+    "address": "Dun Laoghaire, Co. Dublin",
+    "latitude": 53.2950,
+    "longitude": -6.1350,
+    "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+  },
+  {
+    "name": "Bluebell Family Resource Centre",
+    "address": "Bluebell, Dublin 12",
+    "latitude": 53.3280,
+    "longitude": -6.3350,
+    "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+  },
+  {
+    "name": "Aster Family Resource Centre",
+    "address": "Balbriggan, Co. Dublin",
+    "latitude": 53.6100,
+    "longitude": -6.1820,
+    "website": "https://www.tusla.ie/services/family-community-support/family-resource-centres/find-family-resource-centre/"
+  }
+]

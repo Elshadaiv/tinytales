@@ -1,4 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/material.dart';
 
 import '../../services/community_event.dart';
@@ -21,6 +22,7 @@ class _CommunityPageState extends State<CommunityPage> {
   CommunityService communityService = CommunityService();
   List<CommunityEvent> events = [
   ];
+  List<Map<String, dynamic>> parentResources = [];
   CommunityEvent? selectedEvent;
   bool isLoading = true;
 
@@ -31,6 +33,7 @@ class _CommunityPageState extends State<CommunityPage> {
   {
     super.initState();
     loadLiveEvents();
+    loadParentResources();
   }
 
   Future<void> getUserLocation() async
@@ -123,6 +126,26 @@ class _CommunityPageState extends State<CommunityPage> {
     return distanceInMeters / 1000;
   }
 
+
+  Future<void> loadParentResources() async
+  {
+    try
+    {
+      final jsonString = await rootBundle.loadString("assets/community/parent_resources.json");
+      final List<dynamic> data = jsonDecode(jsonString);
+      setState(()
+      {
+        parentResources = data.cast<Map<String, dynamic>>();
+      });
+
+      print("Loaded ${parentResources.length}");
+    }
+    catch (e)
+    {
+      print("Error loading $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -177,6 +200,29 @@ class _CommunityPageState extends State<CommunityPage> {
                     child: Icon(
                       Icons.location_pin,
                       color: Colors.purpleAccent,
+                      size: 40,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            MarkerLayer(
+              markers: parentResources.map((resource)
+              {
+                return Marker(
+                  point: LatLng(resource["latitude"], resource["longitude"]),
+                  width: 40, height: 40,
+                  child: GestureDetector(
+                    onTap: () async
+                    {
+                      final url = Uri.parse(resource["website"]);
+                      if (await canLaunchUrl(url))
+                      {
+                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    child: Icon(
+                      Icons.location_pin, color: Colors.green,
                       size: 40,
                     ),
                   ),

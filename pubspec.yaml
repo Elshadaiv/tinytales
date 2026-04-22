@@ -105,6 +105,7 @@ flutter:
     - assets/machineLearning/test_spectrogram3.png
     - assets/machineLearning/
     - assets/milestones/
+    - assets/community/parent_resources.json
 
 
 
