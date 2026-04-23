@@ -45,6 +45,12 @@ class HomePageState extends State<HomePage> {
   String smartAlertTitle = "";
   String smartAlertMessage = "";
 
+  String latestMedication = "";
+  String latestMedicationTime = "";
+  String homeTempStatus = "";
+  Color homeTempColor = Colors.green;
+  List<Map<String, dynamic>> homeAlerts = [];
+
   List<Map<String, dynamic>> babies = [];
   String? get selectedBabyId => SelectedBabyService.selectedBabyId.value;
   String get selectedBabyName => SelectedBabyService.selectedBabyName.value;
@@ -64,6 +70,7 @@ class HomePageState extends State<HomePage> {
         await _loadBabies();
         await _homeSummary();
         await _checkSmartCareAlert();
+        await _loadHomeAlerts();
       },
       color: Colors.purple,
       child: ListView(
@@ -72,17 +79,17 @@ class HomePageState extends State<HomePage> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 10),
-        Row(
+            SizedBox(height: 18),
+            Row(
           children: [
             if (babies.isNotEmpty) _babyAvatar(),
-            if (babies.isNotEmpty) SizedBox(width: 12),
+            if (babies.isNotEmpty) SizedBox(width: 14),
         Expanded(
              child: Text(
               babies.isEmpty
               ? "Welcome!"
               : " $selectedBabyName",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.black87),
             ),
         ),
             Spacer(),
@@ -125,8 +132,8 @@ class HomePageState extends State<HomePage> {
               ),
           ],
         ),
-
-            SizedBox(height: 16),
+            _smartSummaryCard(),
+            SizedBox(height: 18),
 
             GridView.count(
                 crossAxisCount: 2,
@@ -174,6 +181,7 @@ class HomePageState extends State<HomePage> {
     SelectedBabyService.selectedBabyId.addListener(_onSelectedBabyChanged);
     _loadBabies();
     _loadNearbyEvent();
+    _loadHomeAlerts();
   }
 
   void _onSelectedBabyChanged()
@@ -254,6 +262,7 @@ class HomePageState extends State<HomePage> {
     });
     await _homeSummary();
     await _checkSmartCareAlert();
+    await _loadHomeAlerts();
   }
 
   Future<void> _homeSummary() async
@@ -448,6 +457,78 @@ class HomePageState extends State<HomePage> {
     final latest = entries.last;
     return labelBuilder(latest);
   }
+  Future<void> _loadHomeAlerts() async
+  {
+    final babyId = selectedBabyId;
+    if (babyId == null) return;
+
+    final userId = auth.currentUser!.uid;
+    final medSnap = await db
+        .child("users/$userId/tracking/$babyId/medications")
+        .get();
+
+    if (medSnap.exists)
+    {
+      final data = Map<dynamic, dynamic>.from(medSnap.value as Map);
+
+      final entries = data.values.toList();
+
+      entries.sort((a, b)
+      {
+        final at = DateTime.tryParse(a["time"]) ?? DateTime(1970);
+        final bt = DateTime.tryParse(b["time"]) ?? DateTime(1970);
+        return at.compareTo(bt);
+      });
+
+      final latest = entries.last;
+
+      latestMedication = "${latest["type"]} • ${latest["dose"]}";
+      latestMedicationTime = _formatIsoTime(latest["time"]);
+    }
+    else
+    {
+      latestMedication = "Not recorded";
+      latestMedicationTime = "";
+    }
+    final tempSnap = await db
+        .child("users/$userId/tracking/$babyId/temperatures")
+        .get();
+
+    if (tempSnap.exists)
+    {
+      final data = Map<dynamic, dynamic>.from(tempSnap.value as Map);
+
+      final entries = data.values.toList();
+
+      entries.sort((a, b)
+      {
+        final at = DateTime.tryParse(a["time"]) ?? DateTime(1970);
+        final bt = DateTime.tryParse(b["time"]) ?? DateTime(1970);
+        return at.compareTo(bt);
+      });
+
+      final latest = entries.last;
+      final temp = double.tryParse(latest["value"].toString());
+
+      if (temp != null)
+      {
+        final result = _getHomeTemperatureStatus(temp);
+        homeTempStatus = result["status"];
+        homeTempColor = result["color"];
+      }
+    }
+    else
+    {
+      homeTempStatus = "No temperature";
+      homeTempColor = Colors.grey;
+    }
+
+    if (mounted)
+    {
+      setState(() {
+      });
+    }
+  }
 
   String _formatIsoTime(dynamic iso)
   {
@@ -509,10 +590,47 @@ class HomePageState extends State<HomePage> {
     return DateTime.tryParse(entries.last[timeKey].toString());
   }
 
+  Map<String, dynamic> _getHomeTemperatureStatus(double temp)
+  {
+    if (temp < 35.0)
+    {
+      return
+        {
+        "status": "Low Temperature",
+        "color": Colors.blue,
+      };
+    }
+
+    if (temp >= 38.0)
+    {
+      return
+        {
+        "status": "High Temperature",
+        "color": Colors.red,
+      };
+    }
+
+    if (temp >= 37.5)
+    {
+      return
+        {
+        "status": "Moderate Temperature",
+        "color": Colors.orange,
+      };
+    }
+
+    return
+      {
+      "status": "Normal Temperature",
+      "color": Colors.green,
+    };
+  }
+
   Future<void> _checkSmartCareAlert() async
   {
     final now = DateTime.now();
 
+    List<Map<String, dynamic>> alerts = [];
     String title = "";
     String message = "";
 
@@ -520,50 +638,66 @@ class HomePageState extends State<HomePage> {
     {
       final hoursSinceFeed = now.difference(lastFeedTime!).inHours;
 
-      if (hoursSinceFeed >= 4)
+      if (hoursSinceFeed >= 4 && hoursSinceFeed < 200)
       {
-        title = "TinyTales";
-        message = "Baby may be hungry. Last feed was ${hoursSinceFeed}h ago.";
+        alerts.add({
+          "icon": Icons.restaurant,
+          "color": Colors.orange,
+          "text": "Baby may be hungry. Last feed was ${hoursSinceFeed}h ago.",
+        });
       }
     }
 
-    if (title.isEmpty && lastNappyTime != null)
+    if (lastNappyTime != null)
     {
       final hoursSinceNappy = now.difference(lastNappyTime!).inHours;
 
-      if (hoursSinceNappy >= 3)
+      if (hoursSinceNappy >= 3 && hoursSinceNappy < 200)
       {
-        title = "TinyTales";
-        message = "Baby may need a nappy change. Last change ${hoursSinceNappy}h ago.";
+        alerts.add({
+          "icon": Icons.baby_changing_station,
+          "color": Colors.blue,
+          "text": "Baby may need a nappy change. Last change was ${hoursSinceNappy}h ago.",
+        });
       }
     }
 
-    if (title.isEmpty && lastSleepEndTime != null)
+    if (lastSleepEndTime != null)
     {
       final hoursAwake = now.difference(lastSleepEndTime!).inHours;
 
-      if (hoursAwake >= 2)
+      if (hoursAwake >= 2 && hoursAwake < 200)
       {
-        title = "TinyTales";
-        message = "Baby may be tired. Awake for ${hoursAwake}h.";
+        alerts.add({
+          "icon": Icons.nightlight_round,
+          "color": Colors.deepPurple,
+          "text": "Baby may be tired. Awake for ${hoursAwake}h.",
+        });
       }
+    }
+
+    if (alerts.isNotEmpty)
+    {
+      title = "TinyTales";
+      message = alerts.first["text"];
     }
 
     if (mounted)
     {
-      final bool alertChanged = (title != smartAlertTitle) || (message != smartAlertMessage);
+      final bool alertChanged = message != smartAlertMessage;
       setState(()
       {
+        homeAlerts = alerts;
         smartAlertTitle = title;
         smartAlertMessage = message;
         if (title.isEmpty)
         {
           alertShown = false;
         }
-        else if(alertChanged)
-          {
-            alertShown = false;
-          }
+        else if (alertChanged)
+        {
+          alertShown = false;
+        }
       });
 
       if (title.isNotEmpty && message.isNotEmpty && !alertShown)
@@ -571,8 +705,6 @@ class HomePageState extends State<HomePage> {
         alertShown = true;
         _showWarning();
       }
-
-
     }
   }
 
@@ -622,6 +754,25 @@ class HomePageState extends State<HomePage> {
 
   Widget _summary(String title, String value, IconData icon, String type)
   {
+
+    Color accent;
+
+    if (type == "feed")
+    {
+      accent = Colors.orange.shade100;
+    } else if (type == "sleep")
+    {
+      accent = Colors.deepPurple.shade100;
+    } else if (type == "temperature")
+    {
+      accent = Colors.red.shade100;
+    } else if (type == "nappy")
+    {
+      accent = Colors.blue.shade100;
+    } else
+    {
+      accent = Colors.grey.shade200;
+    }
     return GestureDetector(
       onTap: ()
       {
@@ -637,6 +788,7 @@ class HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent, width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black12,
@@ -648,7 +800,7 @@ class HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 24),
+          Icon(icon, size: 24, color: accent),
           SizedBox(height: 10),
           Text(
             title,
@@ -720,6 +872,165 @@ class HomePageState extends State<HomePage> {
       );
     });
   }
+  Widget _smartSummaryCard()
+  {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Color(0xFFFFFBFF),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.purple.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.notifications_active,
+                  color: Colors.purple,
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: 10),
+
+              Text(
+                "Alerts",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+
+          SizedBox(height: 18),
+
+          if (homeAlerts.isEmpty)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                  size: 20,
+                ),
+                SizedBox(width: 8),
+
+                Expanded(
+                  child: Text(
+                "Everything looks good right now.",
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: homeAlerts.map<Widget>((alert)
+              {
+                return Padding(
+                  padding: EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        alert["icon"],
+                        color: alert["color"],
+                        size: 20,
+                      ),
+
+                      SizedBox(width: 8),
+
+                      Expanded(
+                        child: Text(
+                          alert["text"],
+                          style: TextStyle(
+                            fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500,),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+
+          SizedBox(height: 12),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.thermostat,
+                color: homeTempColor,
+                size: 20,
+              ),
+
+              SizedBox(width: 8),
+
+              Expanded(
+                child: Text(
+                  homeTempStatus,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: homeTempColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          SizedBox(height: 12),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.medication,
+                color: Colors.teal,
+                size: 20,
+              ),
+
+              SizedBox(width: 8),
+
+              Expanded(
+                child: Text(
+                  latestMedicationTime.isNotEmpty
+                      ? "$latestMedication at $latestMedicationTime"
+                      : latestMedication,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _babyAvatar()
   {
@@ -745,9 +1056,9 @@ class HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: Color(0xFFF7F6FB),
       appBar: AppBar(
-        backgroundColor: Colors.grey[300],
+        backgroundColor: Color(0xFFF7F6FB),
         leading:  IconButton(
           icon: Icon(Icons.person),
           onPressed: toProfile,
