@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'selected_baby_service.dart';
 
 class AnalyticsPage extends StatefulWidget
 {
@@ -30,10 +31,7 @@ class _AnalyticsPageState extends State<AnalyticsPage>
   final auth = FirebaseAuth.instance;
   final db = FirebaseDatabase.instance.ref();
 
-  List<Map<String, dynamic>> babies = [
-
-  ];
-  String? selectedBabyId;
+  String? get selectedBabyId => SelectedBabyService.selectedBabyId.value;
 
   List<FlSpot> feedingSpots = [
   ];
@@ -76,39 +74,24 @@ class _AnalyticsPageState extends State<AnalyticsPage>
     {
       selectedMetric = "Temperature";
     }
-    _loadBabies();
+    SelectedBabyService.selectedBabyId.addListener(_onSelectedBabyChanged);
+    _loadSelectedMetric();
   }
 
-  Future<void> _loadBabies() async
+  void _onSelectedBabyChanged() async
   {
-    final userId = auth.currentUser!.uid;
-
-    final snapshot = await FirebaseFirestore.instance
-        .collection("baby_profiles")
-        .where("userId", isEqualTo: userId)
-        .get();
-
-    babies = snapshot.docs.map((doc)
-    {
-      return
-        {
-          "id": doc.id,
-          "name": doc.get("name").toString(),
-        };
-    }).toList();
-
-    if (babies.isNotEmpty)
-    {
-      selectedBabyId ??= babies.first["id"];
-      await _loadSelectedMetric();
-    }
-
     if (mounted)
     {
-      setState(() {
-
-      });
+      await _loadSelectedMetric();
+      setState(() {});
     }
+  }
+
+  @override
+  void dispose()
+  {
+    SelectedBabyService.selectedBabyId.removeListener(_onSelectedBabyChanged);
+    super.dispose();
   }
 
   Widget _metricButton(String label)
@@ -525,33 +508,6 @@ class _AnalyticsPageState extends State<AnalyticsPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            DropdownButton<String>(
-              value: selectedBabyId,
-              hint: Text("Select Baby"),
-              onChanged: (val) async
-              {
-                if (val == null)
-                {
-                  return;
-                }
-                setState(()
-                {
-                  selectedBabyId = val;
-                });
-                await _loadSelectedMetric();
-              },
-              items: babies.map<DropdownMenuItem<String>>((baby)
-              {
-                return DropdownMenuItem<String>(
-                  value: baby["id"],
-                  child: Text(baby["name"]),
-                );
-              }).toList(),
-            ),
-
-            SizedBox(height: 20),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

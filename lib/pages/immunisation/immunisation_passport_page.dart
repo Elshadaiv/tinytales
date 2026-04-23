@@ -147,7 +147,7 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
       appBar: AppBar(
         backgroundColor: Colors.grey[300],
         title: Text(
-          "${widget.babyName}'s Immnisation Passport",
+          "${widget.babyName}'s Immunisation Passport",
           style: const TextStyle(
               fontWeight: FontWeight.bold
           ),

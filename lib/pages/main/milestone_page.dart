@@ -8,6 +8,7 @@ import 'package:tinytales/pages/milestones/milestone_checklist9m.dart';
 import '../../services/notification_service.dart';
 import '../milestones/milestone_checklist12m.dart';
 import 'package:tinytales/pages/milestones/milestones_videos.dart';
+import '../../services/selected_baby_service.dart';
 
 
 
@@ -31,8 +32,8 @@ class _milestone_pageState extends State<milestone_page>
 
 
   bool showVideos = false;
-
-  String? selectedBabyId;
+  bool loadingBabies = true;
+  String? get selectedBabyId => SelectedBabyService.selectedBabyId.value;
   List<Map<String, dynamic>> babies = [
 
   ];
@@ -67,10 +68,29 @@ class _milestone_pageState extends State<milestone_page>
    {
      super.initState();
      _firstbaby();
+     SelectedBabyService.selectedBabyId.addListener(_onSelectedBabyChanged);
    }
 
+  void _onSelectedBabyChanged() async
+  {
+    if (selectedBabyId != null)
+    {
+      await _setSelectedBaby(selectedBabyId!);
+    }
+  }
+
+  @override
+  void dispose()
+  {
+    SelectedBabyService.selectedBabyId.removeListener(_onSelectedBabyChanged);
+    super.dispose();
+  }
   Future<void> _firstbaby() async
   {
+    setState(()
+    {
+      loadingBabies = true;
+    });
     final user = auth.currentUser;
 
     if (user == null)
@@ -82,40 +102,57 @@ class _milestone_pageState extends State<milestone_page>
         .where("userId", isEqualTo: user.uid)
         .get();
 
-    babies = snapshot.docs.map((doc)
+    babies = snapshot.docs.map<Map<String, dynamic>>((doc)
     {
-      return
-        {
-          "id": doc.id,
-          "name": doc.get("name").toString(),
-          "dob": doc.get("dob").toString(),
-        };
+      return <String, dynamic>
+      {
+        "id": doc.id,
+        "name": doc.get("name").toString(),
+        "dob": doc.get("dob").toString(),
+      };
     }).toList();
     if (babies.isNotEmpty)
     {
+      final babyIdToUse = selectedBabyId ?? babies.first["id"].toString();
       if (selectedBabyId == null)
       {
-        await _setSelectedBaby(babies.first["id"]);
-        Future.delayed(Duration(seconds: 2), ()
-        {
-          NotificationService.showMilestoneNotification();
-        });
+        SelectedBabyService.selectedBabyId.value = babyIdToUse;
       }
+      await _setSelectedBaby(babyIdToUse);
+
+      Future.delayed(Duration(seconds: 2), ()
+      {
+        NotificationService.showMilestoneNotification();
+      });
     }
     else
     {
-      if (mounted) {
-        setState(() {});
+      if (mounted)
+      {
+        setState(()
+        {
+          loadingBabies = false;
+        });
       }
+    }
+
+    if (mounted)
+    {
+      setState(()
+      {
+        loadingBabies = false;
+      });
     }
   }
 
   Future<void> _setSelectedBaby(String babyId) async
   {
-    selectedBabyId = babyId;
-
-    final selectedBaby = babies.firstWhere((b) => b["id"].toString() == babyId,);
-
+    final selectedBaby = babies.firstWhere((b) => b["id"].toString() == babyId, orElse: () => <String, dynamic>{},);
+    if (selectedBaby.isEmpty)
+    {
+      return;
+    }
+    SelectedBabyService.selectedBabyId.value = babyId;
     final dobText = selectedBaby["dob"]?.toString() ?? "";
     selectedBabyDob = _parseDob(dobText);
 
@@ -127,7 +164,6 @@ class _milestone_pageState extends State<milestone_page>
     {
       babyAgeMonths = 0;
     }
-
     await _loadMilestoneLocks();
 
     if (mounted)
@@ -152,16 +188,20 @@ class _milestone_pageState extends State<milestone_page>
       return iso;
     }
 
-    final parts = dob.split("/");
+    final parts = dob.split(RegExp(r'[\/\-\.]'));
     if (parts.length == 3)
     {
-      final day = int.tryParse(parts[0]);
-      final month = int.tryParse(parts[1]);
-      final year = int.tryParse(parts[2]);
+      final a = int.tryParse(parts[0]);
+      final b = int.tryParse(parts[1]);
+      final c = int.tryParse(parts[2]);
 
-      if (day != null && month != null && year != null)
+      if (a != null && b != null && c != null)
       {
-        return DateTime(year, month, day);
+        if (a > 31)
+        {
+          return DateTime(a, b, c);
+        }
+        return DateTime(c, b, a);
       }
     }
     return null;
@@ -239,30 +279,6 @@ class _milestone_pageState extends State<milestone_page>
             style: TextStyle(fontWeight: FontWeight.w700),
           ),
         actions: [
-          if (babies.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: selectedBabyId,
-                  onChanged: (val) async
-                  {
-                    if (val == null)
-                    {
-                      return;
-                    }
-                    await _setSelectedBaby(val);
-                  },
-                  items: babies.map<DropdownMenuItem<String>>((b)
-                  {
-                    return DropdownMenuItem<String>(
-                      value: b["id"] as String,
-                      child: Text(b["name"].toString()),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
         ],
         ),
         body: Padding(
@@ -270,7 +286,7 @@ class _milestone_pageState extends State<milestone_page>
           child: Column(
             children: [
 
-              if (babies.isEmpty)
+              if (!loadingBabies && babies.isEmpty)
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.all(16),

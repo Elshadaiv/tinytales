@@ -7,6 +7,7 @@ import 'package:tinytales/pages/machinelearning/cry_detection.dart';
 import 'package:tinytales/pages/machinelearning/cry_context.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
+import '../../services/selected_baby_service.dart';
 
 import 'package:wav/wav.dart';
 import 'package:image/image.dart' as img;
@@ -27,7 +28,7 @@ class _InsightsPageState extends State<InsightsPage>
 {
 
   final auth = FirebaseAuth.instance;
-  String? selectedBabyId;
+  String? get selectedBabyId => SelectedBabyService.selectedBabyId.value;
   List<QueryDocumentSnapshot<Map<String, dynamic>>> babies = [
   ];
   final cry_context engine = cry_context();
@@ -49,6 +50,22 @@ class _InsightsPageState extends State<InsightsPage>
   {
     super.initState();
     _loadBabies();
+    SelectedBabyService.selectedBabyId.addListener(_onSelectedBabyChanged);
+  }
+  void _onSelectedBabyChanged()
+  {
+    if (mounted)
+    {
+      setState(() {
+      });
+    }
+  }
+
+  @override
+  void dispose()
+  {
+    SelectedBabyService.selectedBabyId.removeListener(_onSelectedBabyChanged);
+    super.dispose();
   }
   Future<void> _loadBabies() async
   {
@@ -172,7 +189,7 @@ class _InsightsPageState extends State<InsightsPage>
       {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Select a baby first"),
+            content: Text("Select a baby on the Home page first"),
           ),
         );
         return;
@@ -508,10 +525,11 @@ class _InsightsPageState extends State<InsightsPage>
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: 18),
-        itemCount: babies.length,
+        itemCount: babies.where((b) => b.id == selectedBabyId).length,
         itemBuilder: (context, index)
         {
-          final baby = babies[index];
+          final visibleBabies = babies.where((b) => b.id == selectedBabyId).toList();
+          final baby = visibleBabies[index];
           final data = baby.data();
           final babyId = baby.id;
           final babyName = data["name"] ?? "Baby";
@@ -519,19 +537,7 @@ class _InsightsPageState extends State<InsightsPage>
           final isUploadingImage = uploadingBabyId == babyId;
 
           return GestureDetector(
-            onTap: ()
-            {
-              setState(()
-              {
-                if (isSelected)
-                {
-                  selectedBabyId = null;
-                }
-                else
-                {
-                  selectedBabyId = baby.id;
-                }
-              });
+            onTap: () {
             },
             child: AnimatedContainer(
               duration: Duration(milliseconds: 220),
@@ -617,7 +623,7 @@ class _InsightsPageState extends State<InsightsPage>
                   ),
                   SizedBox(height: 8),
                   Text(
-                    isSelected ? "Baby crying?" : "Tap to select",
+                    isSelected ? "Ready for cry analysis" : "Selected from Home page",
                     style: TextStyle(
                       fontSize: 13,
                       color: isSelected ? Colors.purple : Colors.black54,

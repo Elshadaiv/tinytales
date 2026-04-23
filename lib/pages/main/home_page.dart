@@ -16,7 +16,7 @@ import 'dart:convert';
 import '../../services/analytics_page.dart';
 import '../../services/community_event.dart';
 import '../../services/community_service.dart';
-
+import '../../services/selected_baby_service.dart';
 
 
 
@@ -46,8 +46,8 @@ class HomePageState extends State<HomePage> {
   String smartAlertMessage = "";
 
   List<Map<String, dynamic>> babies = [];
-  String? selectedBabyId;
-  String selectedBabyName = "";
+  String? get selectedBabyId => SelectedBabyService.selectedBabyId.value;
+  String get selectedBabyName => SelectedBabyService.selectedBabyName.value;
 
   DateTime? lastFeedTime;
   DateTime? lastNappyTime;
@@ -80,8 +80,8 @@ class HomePageState extends State<HomePage> {
         Expanded(
              child: Text(
               babies.isEmpty
-              ? "Welcome Back!"
-              : "Hi, $selectedBabyName",
+              ? "Welcome!"
+              : " $selectedBabyName",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
             ),
         ),
@@ -99,9 +99,10 @@ class HomePageState extends State<HomePage> {
                   final picked = babies.firstWhere(
                         (b) => b["id"] == val, orElse: () => <String, dynamic>{"id": val, "name": ""},
                   );
+
+                  SelectedBabyService.selectedBabyId.value = val;
+                  SelectedBabyService.selectedBabyName.value = (picked["name"] ?? "").toString();
                   setState(() {
-                    selectedBabyId = val;
-                    selectedBabyName = (picked["name"] ?? "").toString();
 
                     lastFeedTime = null;
                     lastNappyTime = null;
@@ -170,8 +171,27 @@ class HomePageState extends State<HomePage> {
   void initState()
   {
     super.initState();
+    SelectedBabyService.selectedBabyId.addListener(_onSelectedBabyChanged);
     _loadBabies();
     _loadNearbyEvent();
+  }
+
+  void _onSelectedBabyChanged()
+  {
+    if (mounted)
+    {
+      _homeSummary();
+      _checkSmartCareAlert();
+      setState(() {
+      });
+    }
+  }
+
+  @override
+  void dispose()
+  {
+    SelectedBabyService.selectedBabyId.removeListener(_onSelectedBabyChanged);
+    super.dispose();
   }
 
   Future<void> _loadNearbyEvent() async
@@ -222,8 +242,11 @@ class HomePageState extends State<HomePage> {
     }).toList();
     if (babies.isNotEmpty)
     {
-      selectedBabyId ??= babies.first["id"];
-      selectedBabyName = babies.first["name"].toString();
+      final currentId = SelectedBabyService.selectedBabyId.value ?? babies.first["id"];
+      final picked = babies.firstWhere((b) => b["id"] == selectedBabyId,
+        orElse: () => babies.first,);
+      SelectedBabyService.selectedBabyId.value = selectedBabyId;
+      SelectedBabyService.selectedBabyName.value = selectedBabyName;
     }
 
     setState(() {

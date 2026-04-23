@@ -14,6 +14,7 @@ import 'package:tinytales/pages/history/TemperatureHistoryList.dart';
 
 import '../baby/fever_guidance_page.dart';
 import '../history/feeding_history_page.dart';
+import '../../services/selected_baby_service.dart';
 
 class TrackingPage extends StatefulWidget {
    TrackingPage({super.key});
@@ -26,44 +27,28 @@ class _TrackingPageState extends State<TrackingPage> {
   final _db = FirebaseDatabase.instance.ref();
   final _auth = FirebaseAuth.instance;
 
-  List<Map<String, dynamic>> babies = [];
-  String? selectedBabyId;
-
+  String? get selectedBabyId => SelectedBabyService.selectedBabyId.value;
   @override
   void initState()
   {
     super.initState();
-    loadBabies();
+    SelectedBabyService.selectedBabyId.addListener(_onSelectedBabyChanged);
   }
 
-  Future<void> loadBabies()
-  async
+  void _onSelectedBabyChanged()
   {
-
-    final userId = _auth.currentUser!.uid;
-
-    final snapshot = await FirebaseFirestore.instance
-        .collection("baby_profiles")
-        .where("userId", isEqualTo: userId)
-        .get();
-
-    babies = snapshot.docs.map((doc)
+    if (mounted)
     {
-      return
-        {
-        "id": doc.id,
-        "name": doc["name"],
-      };
-    }).toList();
-
-    if (babies.isNotEmpty)
-    {
-      selectedBabyId ??= babies.first["id"];
+      setState(() {
+      });
     }
-
-    setState(() {});
   }
-
+  @override
+  void dispose()
+  {
+    SelectedBabyService.selectedBabyId.removeListener(_onSelectedBabyChanged);
+    super.dispose();
+  }
   Future<void> addFeeding(
       {
     required String babyId,
@@ -351,8 +336,8 @@ class _TrackingPageState extends State<TrackingPage> {
         body: RefreshIndicator(
           onRefresh: () async
           {
-            await loadBabies();
-          },
+        setState(() {
+      });            },
           color: Colors.purple,
       child: Padding(
         padding:  EdgeInsets.all(16.0),
@@ -361,24 +346,6 @@ class _TrackingPageState extends State<TrackingPage> {
           child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            DropdownButton<String>(
-              value: selectedBabyId,
-              onChanged: (newValue)
-              {
-                setState(() {
-                  selectedBabyId = newValue;
-                });
-              },
-
-              items: babies.map<DropdownMenuItem<String>>((baby)
-              {
-                return DropdownMenuItem<String>
-                  (
-                  value: baby["id"] as String,
-                  child: Text(baby["name"] as String),
-                );
-              }).toList(),
-            ),
              Text(
               " Feeding", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
