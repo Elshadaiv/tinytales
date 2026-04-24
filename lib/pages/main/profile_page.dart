@@ -6,7 +6,9 @@ import 'package:tinytales/components/my_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tinytales/pages/immunisation/immunisation_passport_page.dart';
 import 'package:tinytales/pages/database/firestore.dart';
-
+import 'dart:io';
+import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
 
 
 class ProfilePage extends StatefulWidget {
@@ -55,6 +57,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   final currentUser = FirebaseAuth.instance.currentUser!;
 
+    final ImagePicker picker = ImagePicker();
+    String? uploadingBabyId;
 
   bool validDate(String dateString) {
     final reg = RegExp(r'^(\d{2})[\/\.-](\d{2})[\/\.-](\d{4})$');
@@ -526,6 +530,73 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
     }
 
 
+    Future<void> _uploadBabyImage(String babyId) async
+    {
+      try
+      {
+        if (uploadingBabyId == babyId)
+        {
+          return;
+        }
+
+        setState(()
+        {
+          uploadingBabyId = babyId;
+        });
+
+        final XFile? pickedFile = await picker.pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 25,
+          maxWidth: 300,
+          maxHeight: 300,
+        );
+
+        if (pickedFile == null)
+        {
+          setState(()
+          {
+            uploadingBabyId = null;
+          });
+          return;
+        }
+
+        final file = File(pickedFile.path);
+        final bytes = await file.readAsBytes();
+        final base64String = base64Encode(bytes);
+
+        await FirebaseFirestore.instance
+            .collection("baby_profiles")
+            .doc(babyId)
+            .update({
+          "imageBase64": base64String,
+        });
+
+        setState(()
+        {
+          uploadingBabyId = null;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Baby image updated"),
+          ),
+        );
+      }
+      catch (e)
+      {
+        setState(()
+        {
+          uploadingBabyId = null;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Failed to update baby image"),
+          ),
+        );
+      }
+    }
+
 
 
 
@@ -597,31 +668,101 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
               itemBuilder: (context, index)
               {
                 final data = babies[index].data() as Map<String, dynamic>;
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  color: Colors.white,
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.child_care,
-                      color:Colors.black ,
+                final babyId = babies[index].id;
+                final imageBase64 = (data["imageBase64"] ?? "").toString();
+                final isUploading = uploadingBabyId == babyId;
+
+                return GestureDetector(
+                  onTap: ()
+                  {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ImmunisationPassportPage(
+                          babyId: data['babyId'], babyName: data['name'],
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    title: Text(data['name'] ?? 'Baby is unkown',
-                    ),
-                    subtitle: Text(
-                        'DOB: ${data['dob'] ?? 'N/A'}\nGender: ${data['gender'] ?? 'N/A'}',
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ImmunisationPassportPage(
-                            babyId: data['babyId'],
-                            babyName: data['name'],
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: ()
+                          {
+                            _uploadBabyImage(babyId);
+                          },
+                          child: CircleAvatar(
+                            radius: 34,
+                            backgroundColor: Colors.purple.shade100,
+                            backgroundImage: imageBase64.isNotEmpty
+                                ? MemoryImage(base64Decode(imageBase64))
+                                : null,
+                            child: isUploading
+                                ? SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.purple,
+                              ),
+                            )
+                                : imageBase64.isEmpty
+                                ? Icon(Icons.add_a_photo, color: Colors.purple)
+                                : null,
                           ),
                         ),
-                        );
-                      },
 
+                        SizedBox(width: 16),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                data['name'] ?? 'Unknown Baby',
+                                style: TextStyle(
+                                  fontSize: 17, fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              SizedBox(height: 6),
+                              Text(
+                                "DOB: ${data['dob'] ?? 'N/A'}",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                              SizedBox(height: 3),
+                              Text(
+                                "Gender: ${data['gender'] ?? 'N/A'}",
+                                style: TextStyle(fontSize: 13,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                              SizedBox(height: 3),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16, color: Colors.grey,
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },

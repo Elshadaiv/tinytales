@@ -89,83 +89,6 @@ class _InsightsPageState extends State<InsightsPage>
   String body = "";
 
 
-  Future<void> _UploadBabyImage(String babyId) async
-  {
-    try
-    {
-      if (uploadingBabyId == babyId)
-      {
-        return;
-      }
-
-      setState(()
-      {
-        uploadingBabyId = babyId;
-      });
-
-      final XFile? pickedFile = await picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 25,
-        maxWidth: 300,
-        maxHeight: 300,
-      );
-
-      if (pickedFile == null)
-      {
-        setState(()
-        {
-          uploadingBabyId = null;
-        });
-        return;
-      }
-
-      final file = File(pickedFile.path);
-      final bytes = await file.readAsBytes();
-      final base64String = base64Encode(bytes);
-
-      await FirebaseFirestore.instance
-          .collection("baby_profiles")
-          .doc(babyId)
-          .update({
-        "imageBase64": base64String,
-      });
-
-      await _loadBabies();
-      setState(()
-      {
-        uploadingBabyId = null;
-      });
-
-      if (!mounted)
-      {
-        return;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Baby image saved"),
-        ),
-      );
-    }
-    catch (e)
-    {
-      setState(()
-      {
-        uploadingBabyId = null;
-      });
-
-      if (!mounted)
-      {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Failed to save image"),
-        ),
-      );
-    }
-  }
-
   Future<String> _getRecordingPath() async
   {
     final dir = await getTemporaryDirectory();
@@ -564,37 +487,6 @@ class _InsightsPageState extends State<InsightsPage>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      GestureDetector(
-                        onTap: ()
-                        {
-                          _UploadBabyImage(babyId);
-                        },
-                      child: CircleAvatar(
-                        radius: 28,
-                        backgroundColor: isSelected
-                            ? Colors.purple.shade100
-                            : Colors.grey.shade300,
-                        backgroundImage: imageBase64.toString().isNotEmpty
-                            ? MemoryImage(base64Decode(imageBase64.toString()))
-                            : null,
-                        child: isUploadingImage
-                          ? SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.2,
-                            color: isSelected ? Colors.purpleAccent : Colors.grey.shade700,
-                          ),
-                        )
-                       : imageBase64.toString().isEmpty
-                        ? Icon(
-                          Icons.add,
-                          color: isSelected ? Colors.purple : Colors.grey.shade700,
-                        )
-                            : null,
-                      ),
-                      ),
-
                       if (isSelected)
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
