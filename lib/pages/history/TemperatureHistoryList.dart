@@ -155,11 +155,38 @@ class TemperatureHistoryList extends StatelessWidget
                           return bt.compareTo(at);
                         });
 
-                        final latestMed = medEntries.first;
+                        final matchingMeds = medEntries.where((med)
+                        {
+                          final medTime = DateTime.tryParse(med["time"].toString());
+
+                          if (medTime == null)
+                          {
+                            return false;
+                          }
+
+                          final difference = medTime.difference(time).inMinutes.abs();
+                          return difference <= 10;
+                        }).toList();
+
+                        if (matchingMeds.isEmpty)
+                        {
+                          return SizedBox();
+                        }
+
+                        final latestMed = matchingMeds.first;
+                        final dose = (latestMed["dose"] ?? "").toString();
+
+                        if (dose.isEmpty || dose.toLowerCase().contains("check packaging"))
+                        {
+                          return SizedBox();
+                        }
 
                         return Text(
-                          "Medication Taken: (${latestMed["dose"]})",
-                          style: TextStyle(fontSize: 13, color: Colors.purple, fontWeight: FontWeight.w600,
+                          "Medication Taken: (${latestMed["type"]} - $dose)",
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.purple,
+                            fontWeight: FontWeight.w600,
                           ),
                         );
                       }

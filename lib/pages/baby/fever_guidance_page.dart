@@ -253,6 +253,16 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
 
   Map<String, dynamic> _checkFever(double temp, int ageMonths)
   {
+
+    if (temp < 35.0)
+    {
+      return
+        {
+          "status": "LOW TEMPERATURE",
+          "color": Colors.blue,
+          "message": "Temperature is low. Keep baby warm and seek medical advice if you are worried.",
+        };
+    }
     if (ageMonths <= 3)
     {
       if (temp > 37.4)
@@ -388,6 +398,16 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
         );
         return;
       }
+
+    if (dose.toLowerCase().contains("check packaging"))
+    {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Please check the packaging for the correct dosage before logging medication."),
+        ),
+      );
+      return;
+    }
     final safety = await _checkMedicationSafety(type);
 
     if (safety["canGive"] == false)
