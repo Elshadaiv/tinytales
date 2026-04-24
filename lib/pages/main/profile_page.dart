@@ -31,6 +31,28 @@ class _ProfilePageState extends State<ProfilePage> {
   final newBabyHeightController = TextEditingController();
   final newBabyHospitalController = TextEditingController();
 
+    String selectedHospital = "";
+    bool showOtherHospitalField = false;
+
+    final List<String> irishHospitals = [
+      "The Rotunda Hospital",
+      "The Coombe Hospital",
+      "National Maternity Hospital",
+      "Cork University Maternity Hospital",
+      "University Maternity Hospital Limerick",
+      "University Hospital Galway",
+      "Mayo University Hospital",
+      "University Hospital Kerry",
+      "Letterkenny University Hospital",
+      "Sligo University Hospital",
+      "Wexford General Hospital",
+      "Portiuncula University Hospital",
+      "Midland Regional Hospital Portlaoise",
+      "Our Lady of Lourdes Hospital Drogheda",
+      "Cavan General Hospital",
+      "Other",
+    ];
+
   final currentUser = FirebaseAuth.instance.currentUser!;
 
 
@@ -90,6 +112,28 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
   if (!validDate(dob)) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Date of birth must contain numbers (e.g. 12/05/2024).')),
+    );
+    return;
+  }
+
+  final weightValue = double.tryParse(weight);
+  final heightValue = double.tryParse(height);
+  if (weightValue == null)
+  {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Weight must be a number."),
+      ),
+    );
+    return;
+  }
+
+  if (heightValue == null)
+  {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Height must be a number."),
+      ),
     );
     return;
   }
@@ -159,6 +203,9 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
       newBabyWeightController.clear();
       newBabyHeightController.clear();
       newBabyHospitalController.clear();
+      selectedHospital = "";
+      showOtherHospitalField = false;
+
     } catch (e) {
       Navigator.pop(context);
       print('Error');
@@ -266,29 +313,71 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
 
                     TextField(
                       controller: newBabyDOBController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                           labelText: "Date of Birth"
                       ),
                     ),
                     TextField(
                       controller: newBabyWeightController,
-                      decoration: const InputDecoration(
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
                           labelText: "Weight"
                       ),
                     ),
                     TextField(
                       controller: newBabyHeightController,
-                      decoration: const InputDecoration(
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
                           labelText: "Height (Cms)"
                       ),
                     ),
 
-                    TextField(
-                      controller: newBabyHospitalController,
-                      decoration: const InputDecoration(
-                          labelText: "Hospital"
+                    SizedBox(height: 12),
+
+                    DropdownButtonFormField<String>(
+                      value: selectedHospital.isEmpty ? null : selectedHospital,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: "Hospital",
                       ),
+                      items: irishHospitals.map((hospital)
+                      {
+                        return DropdownMenuItem<String>(
+                          value: hospital, child: Text(
+                          hospital,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        );
+                      }).toList(),
+                      onChanged: (value)
+                      {
+                        if (value == null)
+                        {
+                          return;
+                        }
+                        setDialogState(()
+                        {
+                          selectedHospital = value;
+                          showOtherHospitalField = value == "Other";
+                          if (value != "Other")
+                          {
+                            newBabyHospitalController.text = value;
+                          }
+                          else
+                          {
+                            newBabyHospitalController.clear();
+                          }
+                        });
+                      },
                     ),
+
+                    if (showOtherHospitalField)
+                      TextField(
+                        controller: newBabyHospitalController,
+                        decoration: InputDecoration(
+                          labelText: "Enter hospital name",
+                        ),
+                      ),
                   ],
                 ),
               ),
