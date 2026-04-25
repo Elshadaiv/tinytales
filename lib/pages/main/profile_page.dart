@@ -598,6 +598,191 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
     }
 
 
+    void _openEditBaby(String babyId, Map<String, dynamic> data)
+    {
+      final editNameController = TextEditingController(text: data["name"] ?? "");
+      final editDobController = TextEditingController(text: data["dob"] ?? "");
+      final editWeightController = TextEditingController(text: data["weight"] ?? "");
+      final editHeightController = TextEditingController(text: data["height"] ?? "");
+      final editHospitalController = TextEditingController(text: data["hospital"] ?? "");
+
+      String editGender = data["gender"] ?? "";
+
+      showDialog(
+        context: context,
+        builder: (context)
+        {
+          return StatefulBuilder(
+            builder: (context, setDialogState)
+            {
+              return AlertDialog(
+                title: Text("Edit Baby Profile"),
+                content: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: editNameController,
+                        decoration: InputDecoration(labelText: "Name"),
+                      ),
+
+                      SizedBox(height: 12),
+
+                      Row(
+                        children: [
+                          Text("Gender"),
+                          Spacer(),
+
+                          GestureDetector(
+                            onTap: ()
+                            {
+                              setDialogState(()
+                              {
+                                editGender = "Male";
+                              });
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: editGender == "Male" ? Colors.purpleAccent : Colors.grey[300],
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                "Male",
+                                style: TextStyle(
+                                  color: editGender == "Male" ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          SizedBox(width: 10),
+
+                          GestureDetector(
+                            onTap: ()
+                            {
+                              setDialogState(()
+                              {
+                                editGender = "Female";
+                              });
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: editGender == "Female" ? Colors.purpleAccent : Colors.grey[300],
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                "Female",
+                                style: TextStyle(
+                                  color: editGender == "Female" ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      TextField(
+                        controller: editDobController,
+                        decoration: InputDecoration(labelText: "Date of Birth"),
+                      ),
+
+                      TextField(
+                        controller: editWeightController,
+                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(labelText: "Weight"),
+                      ),
+
+                      TextField(
+                        controller: editHeightController,
+                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(labelText: "Height (Cms)"),
+                      ),
+
+                      TextField(
+                        controller: editHospitalController,
+                        decoration: InputDecoration(labelText: "Hospital"),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: ()
+                    {
+                      Navigator.pop(context);
+                    },
+                    child: Text("Cancel"),
+                  ),
+
+                  TextButton(
+                    onPressed: () async
+                    {
+                      final name = editNameController.text.trim();
+                      final dob = editDobController.text.trim();
+                      final weight = editWeightController.text.trim();
+                      final height = editHeightController.text.trim();
+                      final hospital = editHospitalController.text.trim();
+
+                      if (name.isEmpty || editGender.isEmpty || dob.isEmpty || weight.isEmpty || height.isEmpty || hospital.isEmpty)
+                      {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Please fill in all fields")),
+                        );
+                        return;
+                      }
+
+                      if (!validDate(dob))
+                      {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Please enter a valid date of birth")),
+                        );
+                        return;
+                      }
+
+                      if (double.tryParse(weight) == null)
+                      {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Weight must be a number")),
+                        );
+                        return;
+                      }
+
+                      if (double.tryParse(height) == null)
+                      {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Height must be a number")),
+                        );
+                        return;
+                      }
+
+                      await FirebaseFirestore.instance
+                          .collection("baby_profiles")
+                          .doc(babyId)
+                          .update({
+                        "name": name,
+                        "gender": editGender,
+                        "dob": dob,
+                        "weight": weight,
+                        "height": height,
+                        "hospital": hospital,
+                      });
+
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Baby profile updated")),
+                      );
+                    },
+                    child: Text("Save"),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    }
+
 
 
 
@@ -609,9 +794,9 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
     final FirestoreService firestoreService = FirestoreService();
 
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: Color(0xFFF7F6FB),
       appBar: AppBar(
-        backgroundColor: Colors.grey[300],
+        backgroundColor: Color(0xFFF7F6FB),
       ),
       body: ListView(
         children: [
@@ -757,9 +942,21 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
                             ],
                           ),
                         ),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          size: 16, color: Colors.grey,
+                        Column(
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.edit, color: Colors.purple),
+                              onPressed: ()
+                              {
+                                _openEditBaby(babyId, data);
+                              },
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                          ],
                         ),
                       ],
                     ),
