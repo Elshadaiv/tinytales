@@ -421,120 +421,23 @@ class _InsightsPageState extends State<InsightsPage>
     {
     }
   }
-
-
-  Widget _buildBabyCards()
+  String _selectedBabyName()
   {
-    if (babies.isEmpty)
-    {
-      return Padding(
-        padding: EdgeInsets.symmetric(horizontal: 18),
-        child: Container(
-          width: double.infinity, padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18),
-          ),
-          child: Text(
-            "No babies found. Please add a baby in the profile section.",
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.black54,
-            ),
-          ),
-        ),
-      );
-    }
-    return SizedBox(
-      height: 170,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: 18),
-        itemCount: babies.where((b) => b.id == selectedBabyId).length,
-        itemBuilder: (context, index)
-        {
-          final visibleBabies = babies.where((b) => b.id == selectedBabyId).toList();
-          final baby = visibleBabies[index];
-          final data = baby.data();
-          final babyId = baby.id;
-          final babyName = data["name"] ?? "Baby";
-          final imageBase64 = data["imageBase64"] ?? "";          final isSelected = selectedBabyId == babyId;
-          final isUploadingImage = uploadingBabyId == babyId;
+    final baby = babies.where((b) => b.id == selectedBabyId).toList();
 
-          return GestureDetector(
-            onTap: () {
-            },
-            child: AnimatedContainer(
-              duration: Duration(milliseconds: 220),
-              width: 240,
-              margin: EdgeInsets.only(right: 14),
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.purple.shade50 : Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: isSelected ? Colors.purple : Colors.grey.shade300,
-                  width: isSelected ? 2 : 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: isSelected ? Colors.purple.withOpacity(0.10) : Colors.black12,
-                    blurRadius: isSelected ? 14 : 8,
-                    offset: Offset(0, isSelected ? 6 : 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (isSelected)
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.purple,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            "Selected",
-                            style: TextStyle(fontSize: 11, color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  SizedBox(height: 18),
-                  Text(
-                    babyName,
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                    ),
-                    maxLines: 1, overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    isSelected ? "Ready for cry analysis" : "Selected from Home page",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isSelected ? Colors.purple : Colors.black54,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
+    if (baby.isEmpty)
+    {
+      return "No baby selected";
+    }
+
+    return baby.first.data()["name"] ?? "Baby";
   }
+
 
   @override
   Widget build(BuildContext context)
   {
-    final Color background = Colors.grey.shade200;
+    final Color background = Color(0xFFF7F6FB);
     final Color card = Colors.white;
     final Color accent = Colors.grey.shade900;
     final bool hasSelectedBaby = selectedBabyId != null;
@@ -552,9 +455,17 @@ class _InsightsPageState extends State<InsightsPage>
               ),
             ),
             SizedBox(height: 18),
-            _buildBabyCards(),
-            SizedBox(height: 18),
 
+            Text(
+              _selectedBabyName(),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: Colors.purple,
+              ),
+            ),
+
+            SizedBox(height: 8),
             SizedBox(height: 10),
             Expanded(
               child: Center(
