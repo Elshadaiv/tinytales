@@ -496,8 +496,8 @@ class _AnalyticsPageState extends State<AnalyticsPage>
   Widget build(BuildContext context)
   {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
-      appBar: AppBar(backgroundColor: Colors.grey[300],
+      backgroundColor:Color(0xFFF7F6FB),
+      appBar: AppBar(backgroundColor: Color(0xFFF7F6FB),
         title: Text(
           "$selectedMetric Analytics",
           style: TextStyle(fontWeight: FontWeight.w700),
@@ -599,7 +599,14 @@ class _AnalyticsPageState extends State<AnalyticsPage>
       labels = temperatureLabels;
       emptyMessage = "No temperature data yet";
     }
+    double minY = 0;
+    double? maxY;
 
+    if (selectedMetric == "Temperature")
+    {
+      minY = 34;
+      maxY = 42;
+    }
     if (spots.isEmpty)
     {
       return Center(
@@ -613,7 +620,8 @@ class _AnalyticsPageState extends State<AnalyticsPage>
       padding: EdgeInsets.all(12),
       child: LineChart(
         LineChartData(
-          minY: selectedMetric == "Temperature" ? 34 : 0,
+          minY: minY,
+          maxY: maxY,
           gridData: FlGridData(show: true),
           borderData: FlBorderData(show: false),
           titlesData: FlTitlesData(

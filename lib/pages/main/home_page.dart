@@ -190,6 +190,7 @@ class HomePageState extends State<HomePage> {
     {
       _homeSummary();
       _checkSmartCareAlert();
+      _loadHomeAlerts();
       setState(() {
       });
     }
@@ -1104,6 +1105,7 @@ class HomePageState extends State<HomePage> {
                   {
                     _homeSummary();
                     _checkSmartCareAlert();
+                    _loadHomeAlerts();
                   }
                   setState(() {
                     currentPage = index;

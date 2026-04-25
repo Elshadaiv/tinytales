@@ -143,9 +143,9 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
     months.sort();
 
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: Color(0xFFF7F6FB),
       appBar: AppBar(
-        backgroundColor: Colors.grey[300],
+        backgroundColor: Color(0xFFF7F6FB),
         title: Text(
           "${widget.babyName}'s Immunisation Passport",
           style: const TextStyle(

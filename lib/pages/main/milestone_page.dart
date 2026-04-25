@@ -271,9 +271,9 @@ class _milestone_pageState extends State<milestone_page>
   Widget build(BuildContext context) {
       final bool videosLocked = babyAgeMonths < 4;
       return Scaffold(
-        backgroundColor: Colors.grey[300],
+        backgroundColor: Color(0xFFF7F6FB),
         appBar: AppBar(
-          backgroundColor: Colors.grey[300],
+          backgroundColor:Color(0xFFF7F6FB),
           title: Text(
             "Milestones",
             style: TextStyle(fontWeight: FontWeight.w700),

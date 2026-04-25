@@ -15,6 +15,8 @@ import 'package:tinytales/pages/history/TemperatureHistoryList.dart';
 import '../baby/fever_guidance_page.dart';
 import '../history/feeding_history_page.dart';
 import '../../services/selected_baby_service.dart';
+import 'package:image_picker/image_picker.dart';
+
 
 class TrackingPage extends StatefulWidget {
    TrackingPage({super.key});
@@ -68,6 +70,7 @@ class _TrackingPageState extends State<TrackingPage> {
     required DateTime time,
     String? color,
     String? notes,
+        String? imageBase64,
   }) async
   {
     final userId = _auth.currentUser!.uid;
@@ -78,6 +81,7 @@ class _TrackingPageState extends State<TrackingPage> {
       "time": time.toIso8601String(),
       "color": color ?? "",
       "notes": notes ?? "",
+      "imageBase64": imageBase64 ?? "",
     });
   }
 
@@ -220,7 +224,7 @@ class _TrackingPageState extends State<TrackingPage> {
           ),
           child: AddNappyForm(
             parentContext: context,
-            onSubmit: (type, time, color, notes)
+            onSubmit: (type, time, color, notes, imageBase64)
             async
                 {
               await addNappy(
@@ -229,6 +233,7 @@ class _TrackingPageState extends State<TrackingPage> {
                 time: time,
                 color: color,
                 notes: notes,
+                imageBase64: imageBase64,
               );
             },
           ),
@@ -316,6 +321,49 @@ class _TrackingPageState extends State<TrackingPage> {
   }
 
 
+  Widget _sectionTitle(String title, IconData icon, Color color)
+  {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        SizedBox(width: 10),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+
+  BoxDecoration _trackingCardDecoration(Color color)
+  {
+    return BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: color.withOpacity(0.25), width: 1.4,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black12,
+          blurRadius: 8,
+          offset: Offset(0, 4),
+        ),
+      ],
+    );
+  }
+
 
 
   @override
@@ -324,15 +372,15 @@ class _TrackingPageState extends State<TrackingPage> {
     if (selectedBabyId == null)
     {
       return  Scaffold(
-        backgroundColor: Colors.grey,
+        backgroundColor: Color(0xFFF7F6FB),
         body: Center(
           child: CircularProgressIndicator(color: Colors.purple),
         ),
       );
     }
     return Scaffold(
-      backgroundColor: Colors.grey[300],
-      appBar: AppBar(backgroundColor: Colors.grey[300]),
+      backgroundColor: Color(0xFFF7F6FB),
+      appBar: AppBar(backgroundColor: Color(0xFFF7F6FB),),
         body: RefreshIndicator(
           onRefresh: () async
           {
@@ -346,24 +394,11 @@ class _TrackingPageState extends State<TrackingPage> {
           child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-             Text(
-              " Feeding", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
+             _sectionTitle("Feeding", Icons.restaurant, Colors.orange),
              SizedBox(height: 10),
             Container(
               padding:  EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow:
-                [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 6,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
+              decoration: _trackingCardDecoration(Colors.orange),
               child: Column(
                 children: [
                   Row(
@@ -466,7 +501,9 @@ class _TrackingPageState extends State<TrackingPage> {
                     child: ElevatedButton(
                       onPressed: () => _openAddFeeding(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
+                        backgroundColor: Colors.orange.shade50,
+                        foregroundColor: Colors.orange.shade900,
+                        elevation: 0,
                       ),
                       child:  Text("Add Feeding"),
                     ),
@@ -489,17 +526,7 @@ class _TrackingPageState extends State<TrackingPage> {
               },
               child: Container(
                 padding:  EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow:  [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 6,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
+                decoration: _trackingCardDecoration(Colors.orange),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -515,26 +542,13 @@ class _TrackingPageState extends State<TrackingPage> {
             ),
              SizedBox(height: 20),
 
-         Text(
-          "Nappies",
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
+            _sectionTitle("Nappies", Icons.baby_changing_station, Colors.blue),
 
          SizedBox(height: 10),
 
         Container(
           padding:  EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow:  [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 6,
-                offset: Offset(0, 3),
-              ),
-            ],
-          ),
+          decoration: _trackingCardDecoration(Colors.blue),
           child: Column(
             children: [
               Row(
@@ -580,7 +594,9 @@ class _TrackingPageState extends State<TrackingPage> {
             child: ElevatedButton(
               onPressed: () => _openAddNappy(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor: Colors.blue.shade50,
+                foregroundColor: Colors.blue.shade900,
+                elevation: 0,
               ),
               child:  Text("Add Nappy"),
             ),
@@ -592,28 +608,21 @@ class _TrackingPageState extends State<TrackingPage> {
              SizedBox(height: 20),
 
             GestureDetector(
-              onTap: ()
+              onTap: () async
               {
-                Navigator.push(
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => NappyHistoryList(babyId: selectedBabyId!),
                   ),
                 );
+                setState(() {
+
+                });
               },
               child: Container(
                 padding:  EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow:  [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 6,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
+               decoration: _trackingCardDecoration(Colors.blue),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -629,27 +638,13 @@ class _TrackingPageState extends State<TrackingPage> {
             ),
              SizedBox(height: 20),
 
-            Text(
-              "Sleep",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
+            _sectionTitle("Sleep", Icons.bedtime, Colors.deepPurple),
 
             SizedBox(height: 10),
 
             Container(
               padding:  EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow:  [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 6,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-
+              decoration: _trackingCardDecoration(Colors.deepPurple),
               child: Column(
                 children: [
                   Row(
@@ -745,7 +740,9 @@ class _TrackingPageState extends State<TrackingPage> {
                     child: ElevatedButton(
                       onPressed: () => _openAddSleep(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
+                        backgroundColor: Colors.deepPurple.shade50,
+                        foregroundColor: Colors.deepPurple,
+                        elevation: 0,
                       ),
                       child: Text("Add Sleep"),
                     ),
@@ -767,17 +764,7 @@ class _TrackingPageState extends State<TrackingPage> {
               },
               child: Container(
                 padding:  EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 6,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
+                decoration: _trackingCardDecoration(Colors.deepPurple),
 
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -794,26 +781,13 @@ class _TrackingPageState extends State<TrackingPage> {
             ),
             SizedBox(height: 20),
 
-            Text(
-              "Temperature",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
+            _sectionTitle("Temperature", Icons.thermostat, Colors.redAccent),
 
             SizedBox(height: 10),
 
             Container(
               padding:  EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 6, offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-
+              decoration: _trackingCardDecoration(Colors.redAccent),
               child: Column(
                 children: [
                   Row(
@@ -915,7 +889,9 @@ class _TrackingPageState extends State<TrackingPage> {
                     child: ElevatedButton(
                       onPressed: () => _openAddTemperature(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
+                        backgroundColor: Colors.red.shade50,
+                        foregroundColor: Colors.redAccent,
+                        elevation: 0,
                       ),
                       child: Text("Add Temperature"),
                     ),
@@ -927,7 +903,9 @@ class _TrackingPageState extends State<TrackingPage> {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
+                        backgroundColor: Colors.red.shade50,
+                        foregroundColor: Colors.redAccent,
+                        elevation: 0,
                       ),
                       onPressed: ()
                       {
@@ -959,17 +937,7 @@ class _TrackingPageState extends State<TrackingPage> {
               },
               child: Container(
                 padding:  EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow:  [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 6,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
+                decoration: _trackingCardDecoration(Colors.redAccent),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

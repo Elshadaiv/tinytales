@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:tinytales/data/medication_guidance.dart';
+import '../../services/selected_baby_service.dart';
 
 class FeverGuidancePage extends StatefulWidget
 {
@@ -19,7 +20,7 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
   List<Map<String, dynamic>> babies = [
 
   ];
-  String? selectedBabyId;
+  String? get selectedBabyId => SelectedBabyService.selectedBabyId.value;
 
   final db = FirebaseDatabase.instance.ref();
   double? latestTemperature;
@@ -34,8 +35,15 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
   {
     super.initState();
     _loadBabies();
+    SelectedBabyService.selectedBabyId.addListener(_onSelectedBabyChanged);
   }
 
+  @override
+  void dispose()
+  {
+    SelectedBabyService.selectedBabyId.removeListener(_onSelectedBabyChanged);
+    super.dispose();
+  }
   Future<void> _loadBabies() async
   {
     final userId = auth.currentUser!.uid;
@@ -57,10 +65,14 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
 
     if (babies.isNotEmpty)
     {
-      selectedBabyId ??= babies.first["id"];
+      if (SelectedBabyService.selectedBabyId.value == null)
+      {
+        SelectedBabyService.selectedBabyId.value = babies.first["id"];
+        SelectedBabyService.selectedBabyName.value = babies.first["name"];
+      }
+
       _updateSelectedBabyAge();
       await _loadLatestTemperature();
-
     }
 
     if (mounted)
@@ -196,7 +208,23 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
       selectedBabyAgeText = "";
       return;
     }
-    final baby = babies.firstWhere((b) => b["id"] == selectedBabyId);
+
+    Map<String, dynamic>? baby;
+
+    for (final b in babies)
+    {
+      if (b["id"] == selectedBabyId)
+      {
+        baby = b;
+        break;
+      }
+    }
+
+    if (baby == null)
+    {
+      return;
+    }
+
     selectedBabyDob = _parseDob(baby["dob"]?.toString());
 
     if (selectedBabyDob != null)
@@ -207,6 +235,7 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
     else
     {
       selectedBabyAgeMonths = 0;
+      selectedBabyAgeText = "";
     }
   }
 
@@ -525,13 +554,23 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
     );
   }
 
+  void _onSelectedBabyChanged()
+  {
+    if (mounted)
+    {
+      _updateSelectedBabyAge();
+      _loadLatestTemperature();
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context)
   {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: Color(0xFFF7F6FB),
       appBar: AppBar(
-        backgroundColor: Colors.grey[300],
+        backgroundColor: Color(0xFFF7F6FB),
         title: Text(
           "Fever Guide",
           style: TextStyle(fontWeight: FontWeight.w700),
@@ -567,7 +606,7 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
                 ],
               ),
             ),
-            if (babies.isEmpty)
+            if (babies.isEmpty && !loadingTemperature)
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(16),
@@ -582,59 +621,6 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
                 child: Text("No baby profile found."),
               ),
 
-
-            if (babies.isNotEmpty)
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Select Baby",
-                      style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    SizedBox(height: 12),
-                    DropdownButton<String>(
-                      value: selectedBabyId,
-                      isExpanded: true,
-                      onChanged: (val) async
-                      {
-
-                        if (val == null)
-                        {
-                          return;
-                        }
-
-
-                        setState(()
-                        {
-                          selectedBabyId = val;
-                          _updateSelectedBabyAge();
-                        });
-                        await _loadLatestTemperature();
-                      },
-                      items: babies.map<DropdownMenuItem<String>>((baby)
-                      {
-                        return DropdownMenuItem<String>(
-                          value: baby["id"] as String,
-                          child: Text(baby["name"].toString()),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
 
             SizedBox(height: 14),
             Container(
