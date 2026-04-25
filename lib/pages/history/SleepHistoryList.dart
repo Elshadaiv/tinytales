@@ -50,12 +50,16 @@ class SleepHistoryList extends StatelessWidget
             raw = data;
           }
 
-          final entries = raw.values.map((e) =>
+          final entries = raw.entries.map((entry)
           {
-            "startTime": e["startTime"],
-            "endTime": e["endTime"],
-            "durationMinutes": e["durationMinutes"] ?? 0,
-            "notes": e["notes"] ?? "",
+            final e = entry.value;
+            return {
+              "key": entry.key,
+              "startTime": e["startTime"],
+              "endTime": e["endTime"],
+              "durationMinutes": e["durationMinutes"] ?? 0,
+              "notes": e["notes"] ?? "",
+            };
           })
               .where((e) => e["endTime"] != null)
               .toList();
@@ -86,8 +90,27 @@ class SleepHistoryList extends StatelessWidget
                   : int.tryParse(item["durationMinutes"].toString()) ?? 0;
 
               final durationText = _formatDuration(mins);
-              return Container(
-                margin:  EdgeInsets.only(bottom: 12),
+              return Dismissible(
+                  key: Key(item["key"].toString()),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: EdgeInsets.only(right: 20),
+                    color: Colors.redAccent,
+                    child: Icon(Icons.delete, color: Colors.white),
+                  ),
+                  onDismissed: (direction) async
+                  {
+                    await db
+                        .child("users/$userId/tracking/$babyId/sleeps/${item["key"]}")
+                        .remove();
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Sleep deleted")),
+                    );
+                  },
+                  child: Container(
+                    margin: EdgeInsets.only(bottom: 12),
                 padding:  EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -123,6 +146,7 @@ class SleepHistoryList extends StatelessWidget
                       ),
                   ],
                 ),
+                      ),
               );
             },
           );

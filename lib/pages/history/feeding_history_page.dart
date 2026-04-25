@@ -10,7 +10,7 @@ class FeedingHistoryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.grey[300],
+        backgroundColor: Color(0xFFF7F6FB),
         title: const Text("Feeding History"),
       ),
 

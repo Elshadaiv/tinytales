@@ -53,10 +53,14 @@ class TemperatureHistoryList extends StatelessWidget
             raw = data;
           }
 
-          final entries = raw.values.map((e) =>
+          final entries = raw.entries.map((entry)
           {
-            "value": e["value"],
-            "time": e["time"],
+            final e = entry.value;
+            return {
+              "key": entry.key,
+              "value": e["value"],
+              "time": e["time"],
+            };
           })
               .where((e) => e["time"] != null).toList();
 
@@ -84,8 +88,23 @@ class TemperatureHistoryList extends StatelessWidget
               final time = DateTime.parse(item["time"]);
 
               final formattedTime = "${time.day}/${time.month}/${time.year} at ${time.hour}:${time.minute.toString().padLeft(2, '0')}";
-              return Container(
-                margin: EdgeInsets.only(bottom: 12),
+              return Dismissible(
+                  key: Key(item["key"].toString()),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: EdgeInsets.only(right: 20),
+                    color: Colors.redAccent, child: Icon(Icons.delete, color: Colors.white),
+                  ),
+                  onDismissed: (direction) async
+                  {
+                    await db
+                        .child("users/$userId/tracking/$babyId/temperatures/${item["key"]}")
+                        .remove();
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Temperature deleted")),);
+                  },
+                  child: Container(
+                    margin: EdgeInsets.only(bottom: 12),
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -193,6 +212,7 @@ class TemperatureHistoryList extends StatelessWidget
                     ),
                   ],
                 ),
+                  ),
               );
             },
           );

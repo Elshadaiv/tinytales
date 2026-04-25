@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
 
 class AddNappyForm extends StatefulWidget {
   final BuildContext parentContext;
-  final Function(String type, DateTime time, String? colour, String? notes) onSubmit;
-
+  final Function(String type, DateTime time, String? colour, String? notes, String? imageBase64) onSubmit;
    AddNappyForm(
       {
     super.key,
@@ -24,6 +25,9 @@ class _AddNappyFormState extends State<AddNappyForm>
   final notesController = TextEditingController();
   DateTime selectedTime = DateTime.now();
 
+  String? imageBase64;
+  final ImagePicker picker = ImagePicker();
+
   void _save()
   {
     widget.onSubmit(
@@ -31,6 +35,7 @@ class _AddNappyFormState extends State<AddNappyForm>
       selectedTime,
       colorController.text.trim(),
       notesController.text.trim(),
+      imageBase64,
     );
 
     Navigator.pop(context);
@@ -38,6 +43,20 @@ class _AddNappyFormState extends State<AddNappyForm>
     ScaffoldMessenger.of(widget.parentContext).showSnackBar(
        SnackBar(content: Text("Nappy tracked")),
     );
+  }
+
+
+  Future<void> _pickImage() async
+  {
+    final XFile? image = await picker.pickImage(source: ImageSource.camera);
+
+    if (image == null) return;
+    final bytes = await image.readAsBytes();
+
+    setState(()
+    {
+      imageBase64 = base64Encode(bytes);
+    });
   }
 
   @override
@@ -55,7 +74,11 @@ class _AddNappyFormState extends State<AddNappyForm>
           [
             DropdownMenuItem(value: "wet", child: Text("Wet")),
             DropdownMenuItem(value: "dirty", child: Text("Dirty")),
-            DropdownMenuItem(value: "both", child: Text("Both")),
+            DropdownMenuItem(value: "Wet + Dirty", child: Text("Wet + Dirty")),
+            DropdownMenuItem(value: "dry", child: Text("Dry")),
+            DropdownMenuItem(value: "unusual", child: Text("Unusual")),
+
+
           ],
 
 
@@ -76,7 +99,19 @@ class _AddNappyFormState extends State<AddNappyForm>
           child:  Text("Save"),
         ),
 
-         SizedBox(height: 10),
+        SizedBox(height: 12),
+
+        Row(
+          children: [
+            ElevatedButton(
+              onPressed: _pickImage,
+              child: Text("Add Photo of Poo"),
+            ),
+            SizedBox(width: 10),
+            if (imageBase64 != null)
+              Icon(Icons.check_circle, color: Colors.green),
+          ],
+        ),
       ],
     );
   }

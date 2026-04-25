@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
 
 class NappyHistoryList extends StatelessWidget {
   final String babyId;
@@ -41,12 +42,17 @@ class NappyHistoryList extends StatelessWidget {
             raw = data;
           }
 
-          final entries = raw.values.map((e) =>
+          final entries = raw.entries.map((entry)
           {
+            final e = entry.value;
+            return{
+            "key": entry.key,
             "type": e["type"],
             "time": e["time"],
             "color": e["color"] ?? "",
             "notes": e["notes"] ?? "",
+            "imageBase64": e["imageBase64"] ?? "",
+          };
           }).toList();
 
           entries.sort((a, b) => DateTime.parse(b["time"]).compareTo(DateTime.parse(a["time"])));
@@ -58,8 +64,27 @@ class NappyHistoryList extends StatelessWidget {
               final item = entries[index];
               final time = DateTime.parse(item["time"]);
               final formatted = "${time.day}/${time.month}/${time.year} at ${time.hour}:${time.minute.toString().padLeft(2, '0')}";
+              return Dismissible(
+                  key: Key(item["key"].toString()),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: EdgeInsets.only(right: 20),
+                    color: Colors.redAccent,
+                    child: Icon(Icons.delete, color: Colors.white),
+                  ),
+                  onDismissed: (direction) async
+                  {
+                    await db
+                        .child("users/$userId/tracking/$babyId/nappies/${item["key"]}")
+                        .remove();
 
-              return Container(
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Nappy deleted")),
+                    );
+                  },
+
+                  child: Container(
                 margin:  EdgeInsets.only(bottom: 12),
                 padding:  EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -84,13 +109,25 @@ class NappyHistoryList extends StatelessWidget {
                     ),
 
                     Text("Time: $formatted"),
-                    if (item["colour"].toString().isNotEmpty)
+                    if (item["imageBase64"].toString().isNotEmpty) ...
+                    [
+                      SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.memory(
+                          base64Decode(item["imageBase64"].toString()),
+                          height: 140, width: double.infinity, fit: BoxFit.cover,
+                        ),
+                      ),
+                    ],
+                    if (item["color"].toString().isNotEmpty)
                       Text("Colour: ${item["color"]}"),
 
                     if (item["notes"].toString().isNotEmpty)
                       Text("Notes: ${item["notes"]}"),
                   ],
                 ),
+                  ),
               );
             },
           );
