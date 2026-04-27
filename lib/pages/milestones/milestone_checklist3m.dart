@@ -176,9 +176,9 @@ class _MilestoneCheckList3mState extends State<MilestoneCheckList3m>
     final progress = total == 0 ? 0.0 : done / total;
 
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: Color(0xFFF7F6FB),
       appBar: AppBar(
-        backgroundColor: Colors.grey[300],
+        backgroundColor: Color(0xFFF7F6FB),
         title: Text("3 Months Milestones"),
       ),
       body: _loading

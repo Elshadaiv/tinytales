@@ -56,7 +56,7 @@ class _MilestoneVideoPageState extends State<MilestoneVideoPage>
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Color(0xFFF7F6FB),
         title: Text(widget.title),
       ),
       body: _controller == null

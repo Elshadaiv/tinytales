@@ -1,13 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
-
-
-
-
-import 'package:flutter/material.dart';
-import 'package:path/path.dart';
 import 'package:tinytales/components/my_button.dart';
 import 'package:tinytales/components/my_textfield.dart';
 
@@ -22,7 +14,7 @@ class RegisterPage extends StatefulWidget {
 class RegisterPageState extends State<RegisterPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final confirmPssswordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
 
   void signUp() async
@@ -41,7 +33,7 @@ class RegisterPageState extends State<RegisterPage> {
     );
 
     try {
-      if(passwordController.text == confirmPssswordController.text) {
+      if(passwordController.text == confirmPasswordController.text) {
         await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: emailController.text,
           password: passwordController.text,
@@ -124,7 +116,7 @@ class RegisterPageState extends State<RegisterPage> {
                   const SizedBox(height: 25),
 
                   MyTextField(
-                    controller: confirmPssswordController,
+                    controller: confirmPasswordController,
                     hintText: 'Confirm Password',
                     obscureText: true,
 

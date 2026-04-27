@@ -121,7 +121,7 @@ class LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
                 children: [
 
-                  Text('A New Beginging?',
+                  Text('A New Beginning?',
                     style: TextStyle(color: Colors.black),
                   ),
 

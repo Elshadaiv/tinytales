@@ -329,7 +329,7 @@ class _InsightsPageState extends State<InsightsPage>
         return;
       }
 
-      final nonPainContext = topLabel == "non-pain"
+      final nonPainContext = topLabel != "pain"
           ? await engine.analyseNonPainContext(
         userId: user.uid,
         babyId: selectedBabyId!,
