@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tinytales/data/baby_data.dart';
-import 'package:tinytales/pages/baby/baby_profile_page.dart';
 import 'package:tinytales/components/my_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tinytales/pages/immunisation/immunisation_passport_page.dart';
@@ -87,6 +86,10 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     if (parsed.isAfter(DateTime.now())) {
+      return false;
+    }
+    if (parsed.day != day || parsed.month != month || parsed.year != year)
+    {
       return false;
     }
     return true;
@@ -197,7 +200,7 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(
-              'Your baby has sucessfully been added to your profile.'))
+              'Your baby has successful been added to your profile.'))
 
       );
 
@@ -791,8 +794,6 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
   @override
   Widget build(BuildContext context) {
 
-    final FirestoreService firestoreService = FirestoreService();
-
     return Scaffold(
       backgroundColor: Color(0xFFF7F6FB),
       appBar: AppBar(
@@ -1004,4 +1005,4 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
   ),
   );
   }
-}///////
+}

@@ -120,7 +120,7 @@ class _milestone_pageState extends State<milestone_page>
       }
       await _setSelectedBaby(babyIdToUse);
 
-      Future.delayed(Duration(seconds: 2), ()
+      Future.delayed(Duration(seconds: 6), ()
       {
         NotificationService.showMilestoneNotification();
       });

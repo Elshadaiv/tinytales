@@ -42,6 +42,9 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
   };
 
   List<String> recommendedVaccines = [];
+  final otherVaccineNameController = TextEditingController();
+  final otherVaccineDateController = TextEditingController();
+  int otherVaccineDose = 1;
 
 
 
@@ -134,6 +137,169 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
     );
   }
 
+  Future<void> _saveOtherVaccine() async
+  {
+    final name = otherVaccineNameController.text.trim();
+    final date = otherVaccineDateController.text.trim();
+
+    if (name.isEmpty || date.isEmpty)
+    {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Enter vaccine name and date")),
+      );
+      return;
+    }
+    try
+    {
+      final parts = date.split(RegExp(r'[\/\.-]'));
+      DateTime(
+        int.parse(parts[2]),
+        int.parse(parts[1]),
+        int.parse(parts[0]),
+      );
+    }
+    catch (e)
+    {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Incorrect date format")),
+      );
+      return;
+    }
+
+    final dateToSave = "$date (dose $otherVaccineDose)";
+
+    final vaccineRef = firestore
+        .collection('baby_profiles')
+        .doc(widget.babyId)
+        .collection('immunisations')
+        .doc(name);
+
+    final doc = await vaccineRef.get();
+
+    if (doc.exists)
+    {
+      final data = doc.data() as Map<String, dynamic>? ?? {
+      };
+      final existingDates = List<String>.from(data['dates'] ?? []);
+      existingDates.add(dateToSave);
+      await vaccineRef.update({
+        'name': name,
+        'dates': existingDates,
+        'custom': true,
+      });
+    }
+    else
+    {
+      await vaccineRef.set({
+        'name': name,
+        'dates': [dateToSave],
+        'custom': true,
+      });
+    }
+    otherVaccineNameController.clear();
+    otherVaccineDateController.clear();
+
+    setState(() {
+      otherVaccineDose = 1;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Other vaccine saved")),
+    );
+  }
+
+  void _showOtherVaccineDialog()
+  {
+    showDialog(
+      context: context,
+      builder: (context)
+      {
+        return StatefulBuilder(
+          builder: (context, setDialogState)
+          {
+            return AlertDialog(
+              title: Text("Other Vaccine"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: otherVaccineNameController,
+                      decoration: InputDecoration(
+                        labelText: "Vaccine name",
+                      ),
+                    ),
+
+                    TextField(
+                      controller: otherVaccineDateController,
+                      decoration: InputDecoration(
+                        labelText: "Date given", hintText: "DD/MM/YYYY",
+                      ),
+                    ),
+
+                    SizedBox(height: 12),
+
+                    Row(
+                      children: [
+                        Text(
+                          "Dose",
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        SizedBox(width: 12),
+                        for (int i = 1; i <= 4; i++)
+                          Padding(
+                            padding: EdgeInsets.only(right: 8),
+                            child: InkWell(
+                              onTap: ()
+                              {
+                                setDialogState(()
+                                {
+                                  otherVaccineDose = i;
+                                });
+                              },
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    otherVaccineDose == i
+                                        ? Icons.check_box
+                                        : Icons.check_box_outline_blank,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(i.toString()),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: ()
+                  {
+                    Navigator.pop(context);
+                  },
+                  child: Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () async
+                  {
+                    await _saveOtherVaccine();
+                    Navigator.pop(context);
+                  },
+                  child: Text("Save"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -213,8 +379,8 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
                               width: 130,
                               child: TextField(
                                 decoration: InputDecoration(
-                                  hintText: "Enter Date",
-                                ),
+                                  hintText: "DD/MM/YYYY",),
+                                keyboardType: TextInputType.datetime,
                                 onChanged: (val)
                                 {
                                   selectedDates[vaccineName] = val;
@@ -338,7 +504,20 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
               },
             ),
           ),
-
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ElevatedButton.icon(
+              icon: Icon(Icons.add),
+              label: Text("Add Other Vaccine"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple, foregroundColor: Colors.white,
+              ),
+              onPressed: ()
+              {
+                _showOtherVaccineDialog();
+              },
+            ),
+          ),
           Padding(
             padding: EdgeInsets.only(bottom: 40.0),
             child: ElevatedButton(
@@ -521,7 +700,7 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
             padding: EdgeInsets.only(bottom: 20.0),
             child: ElevatedButton.icon(
               icon: Icon(Icons.picture_as_pdf),
-              label: Text("Downlaod as PDF"),
+              label: Text("Download as PDF"),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
                 foregroundColor: Colors.white,

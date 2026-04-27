@@ -170,7 +170,7 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
       return iso;
     }
 
-    final parts = dob.split("/");
+    final parts = dob.split(RegExp(r'[\/\-\.]'));
     if (parts.length == 3)
     {
       final day = int.tryParse(parts[0]);

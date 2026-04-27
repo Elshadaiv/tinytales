@@ -757,10 +757,12 @@ class HomePageState extends State<HomePage> {
   {
 
     Color accent;
+    Color iconColor;
 
     if (type == "feed")
     {
       accent = Colors.orange.shade100;
+      iconColor = Colors.orange.shade700;
     } else if (type == "sleep")
     {
       accent = Colors.deepPurple.shade100;
