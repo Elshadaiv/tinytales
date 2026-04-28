@@ -40,12 +40,18 @@ class TinyTalesApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.purple
+        primarySwatch: Colors.purple,
       ),
-      home: const AuthPage(),//////test
+      builder: (context, child)
+      {
+        return SafeArea(
+          child: child ?? SizedBox(),
+        );
+      },
+      home: const AuthPage(),
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:tinytales/components/my_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tinytales/pages/immunisation/immunisation_passport_page.dart';
 import 'package:tinytales/pages/database/firestore.dart';
+import 'package:tinytales/pages/main/home_page.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
@@ -202,6 +203,13 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
           SnackBar(content: Text(
               'Your baby has successful been added to your profile.'))
 
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomePage(),
+        ),
       );
 
       newBabyNameController.clear();

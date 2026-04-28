@@ -320,8 +320,9 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
           SizedBox(height: 16),
 
           Padding(
@@ -361,10 +362,11 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
 
           SizedBox(height: 10),
 
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.symmetric(horizontal: 12),
-              children: [
+          ListView(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            children: [
                 ...((vaccineSchedule[selectedMonth] ?? []).map((vaccineName)
                 {
                   return Card(
@@ -421,7 +423,7 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
                 }).toList()),
               ],
             ),
-          ),
+
 
           SizedBox(
             height: 190,
@@ -725,6 +727,7 @@ class _ImmunisationPassportPageState extends State<ImmunisationPassportPage> {
           )
         ],
       ),
+        ),
     );
 
   }

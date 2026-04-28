@@ -33,8 +33,13 @@ class _CommunityPageState extends State<CommunityPage> {
   void initState()
   {
     super.initState();
-    loadLiveEvents();
-    loadParentResources();
+    _loadCommunityData();
+  }
+
+  Future<void> _loadCommunityData() async
+  {
+    await loadParentResources();
+    await loadLiveEvents();
   }
 
   Future<void> getUserLocation() async
@@ -90,7 +95,7 @@ class _CommunityPageState extends State<CommunityPage> {
           return event.latitude != 0 && event.longitude != 0;
         }).toList();
 
-        if (events.isNotEmpty)
+        if (events.isNotEmpty && selectedEvent == null && selectedResource == null)
         {
           selectedEvent = events.first;
         }

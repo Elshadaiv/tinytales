@@ -9,7 +9,7 @@ class CommunityService
   Future<List<CommunityEvent>> fetchLiveEvents(double latitude, double longitude) async
   {
     final url = Uri.parse(
-      'https://app.ticketmaster.com/discovery/v2/events.json?apikey=$apiKey&latlong=$latitude,$longitude&radius=50&classificationName=family',);
+      'https://app.ticketmaster.com/discovery/v2/events.json?apikey=$apiKey&latlong=$latitude,$longitude&radius=100&size=50&keyword=family',);
 
     final response = await http.get(url);
     if (response.statusCode == 200)
@@ -55,7 +55,25 @@ class CommunityService
                 genre.contains('children') ||
                 genre.contains('education');
 
-        if (!matchesKeyword && !matchesCategory)
+
+        final isFamilyFriendly =
+            matchesKeyword ||
+                matchesCategory ||
+                genre.contains('children') ||
+                genre.contains('family') ||
+                title.contains('kids') ||
+                title.contains('family') ||
+                title.contains('child') ||
+                title.contains('children') ||
+                title.contains('panto') ||
+                title.contains('disney') ||
+                title.contains('museum') ||
+                title.contains('workshop') ||
+                title.contains('play') ||
+                title.contains('story') ||
+                title.contains('school');
+
+        if (!isFamilyFriendly)
         {
           return null;
         }
