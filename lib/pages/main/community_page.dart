@@ -25,6 +25,7 @@ class _CommunityPageState extends State<CommunityPage> {
   List<Map<String, dynamic>> parentResources = [];
   CommunityEvent? selectedEvent;
   bool isLoading = true;
+  Map<String, dynamic>? selectedResource;
 
   Position? userPosition;
 
@@ -195,6 +196,7 @@ class _CommunityPageState extends State<CommunityPage> {
                       setState(()
                       {
                         selectedEvent = event;
+                        selectedResource = null;
                       });
                     },
                     child: Icon(
@@ -213,13 +215,13 @@ class _CommunityPageState extends State<CommunityPage> {
                   point: LatLng(resource["latitude"], resource["longitude"]),
                   width: 40, height: 40,
                   child: GestureDetector(
-                    onTap: () async
+                    onTap: ()
                     {
-                      final url = Uri.parse(resource["website"]);
-                      if (await canLaunchUrl(url))
+                      setState(()
                       {
-                        await launchUrl(url, mode: LaunchMode.externalApplication);
-                      }
+                        selectedResource = resource;
+                        selectedEvent = null;
+                      });
                     },
                     child: Icon(
                       Icons.location_pin, color: Colors.green,
@@ -237,9 +239,9 @@ class _CommunityPageState extends State<CommunityPage> {
             CommunityInfoCard(
               event: selectedEvent!,
               distance: calculateDistance(
-              selectedEvent!.latitude,
-              selectedEvent!.longitude,
-    ),
+                selectedEvent!.latitude,
+                selectedEvent!.longitude,
+              ),
               onViewEvent:() async
               {
                 final url = Uri.parse(selectedEvent!.eventUrl);
@@ -249,6 +251,65 @@ class _CommunityPageState extends State<CommunityPage> {
                   await launchUrl(url, mode: LaunchMode.externalApplication);
                 }
               },
+            )
+          else if (selectedResource != null)
+            Container(
+              width: double.infinity,
+              margin: EdgeInsets.all(14),
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    selectedResource!["name"] ?? "Parent Resource",
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    selectedResource!["description"] ?? "Useful local support for parents.",
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    selectedResource!["address"] ?? "",
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: () async
+                    {
+                      final url = Uri.parse(selectedResource!["website"]);
+
+                      if (await canLaunchUrl(url))
+                      {
+                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    child: Text("Open Website"),
+                  ),
+                ],
+              ),
             )
           else
             Padding(

@@ -1076,16 +1076,18 @@ class HomePageState extends State<HomePage> {
         color: Colors.black,
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 17),
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             child: GNav(
               backgroundColor: Colors.black,
-                color: Colors.white,
-                activeColor: Colors.white,
-                tabBackgroundColor: Colors.purple,
-                gap: 8,
-                padding: const EdgeInsets.all(16),
-                tabs: const [
-                GButton(icon: Icons.home,
+              color: Colors.white,
+              activeColor: Colors.white,
+              tabBackgroundColor: Colors.purple,
+              gap: 4,
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+              textSize: 12,
+              tabs: [
+                GButton(
+                  icon: Icons.home,
                   text: 'Home',
                 ),
                 GButton(icon: Icons.info,
@@ -1101,20 +1103,22 @@ class HomePageState extends State<HomePage> {
                     text: 'Milestones',
                   ),
               ],
-                onTabChange: (int index) {
-                if (index >= 0 && index < pages.length) {
+              onTabChange: (int index)
+              {
+                if (index >= 0 && index < pages.length)
+                {
                   if (index == 0)
                   {
                     _homeSummary();
                     _checkSmartCareAlert();
                     _loadHomeAlerts();
                   }
+
                   setState(() {
                     currentPage = index;
                   });
-
                 }
-                }
+              },
             ),
           ),
         ),
