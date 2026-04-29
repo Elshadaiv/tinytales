@@ -251,11 +251,19 @@ class HomePageState extends State<HomePage> {
     }).toList();
     if (babies.isNotEmpty)
     {
-      final currentId = SelectedBabyService.selectedBabyId.value ?? babies.first["id"];
-      final picked = babies.firstWhere((b) => b["id"] == selectedBabyId,
-        orElse: () => babies.first,);
-      SelectedBabyService.selectedBabyId.value = selectedBabyId;
-      SelectedBabyService.selectedBabyName.value = selectedBabyName;
+      final currentId = SelectedBabyService.selectedBabyId.value;
+
+      final picked = babies.firstWhere((b) => b["id"] == currentId,
+        orElse: () => babies.first,
+      );
+
+      SelectedBabyService.selectedBabyId.value = picked["id"];
+      SelectedBabyService.selectedBabyName.value = picked["name"];
+    }
+    else
+    {
+      SelectedBabyService.selectedBabyId.value = null;
+      SelectedBabyService.selectedBabyName.value = "";
     }
 
     setState(() {

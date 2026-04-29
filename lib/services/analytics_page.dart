@@ -23,6 +23,7 @@ class _AnalyticsPageState extends State<AnalyticsPage>
 
 
   final List<String> ranges = [
+    "24 Hours",
     "7 Days",
     "30 Days",
     "All",
@@ -195,12 +196,19 @@ class _AnalyticsPageState extends State<AnalyticsPage>
         raw = data;
       }
 
+      final now = DateTime.now();
+
       final entries = raw.values.map((e) =>
       {
+        "type": e["type"],
         "amount": e["amount"],
         "time": e["time"],
       })
-          .where((e) => e["time"] != null)
+          .where((e)
+      {
+        final amount = double.tryParse(e["amount"].toString());
+        return e["time"] != null && amount != null;
+      })
           .toList();
 
       entries.sort((a, b)
@@ -212,14 +220,48 @@ class _AnalyticsPageState extends State<AnalyticsPage>
 
       List<Map<String, dynamic>> filtered = entries;
 
-      if (selectedRange == "7 Days" && entries.length > 7)
+      if (selectedRange == "24 Hours")
       {
-        filtered = entries.sublist(entries.length - 7);
+        filtered = entries.where((e)
+        {
+          final time = DateTime.tryParse(e["time"].toString());
+
+          if (time == null)
+          {
+            return false;
+          }
+
+          return now.difference(time).inHours <= 24;
+        }).toList();
       }
-    else if (selectedRange == "30 Days" && entries.length > 30)
-    {
-      filtered = entries.sublist(entries.length - 30);
-    }
+      else if (selectedRange == "7 Days")
+      {
+        filtered = entries.where((e)
+        {
+          final time = DateTime.tryParse(e["time"].toString());
+
+          if (time == null)
+          {
+            return false;
+          }
+
+          return now.difference(time).inDays <= 7;
+        }).toList();
+      }
+      else if (selectedRange == "30 Days")
+      {
+        filtered = entries.where((e)
+        {
+          final time = DateTime.tryParse(e["time"].toString());
+
+          if (time == null)
+          {
+            return false;
+          }
+
+          return now.difference(time).inDays <= 30;
+        }).toList();
+      }
 
       for (int i = 0; i < filtered.length; i++)
       {
@@ -230,7 +272,17 @@ class _AnalyticsPageState extends State<AnalyticsPage>
 
         if (time != null)
         {
-          feedingLabels.add("${time.day}/${time.month}");
+          final hour = time.hour.toString().padLeft(2, '0');
+          final minute = time.minute.toString().padLeft(2, '0');
+
+          if (selectedRange == "24 Hours")
+          {
+            feedingLabels.add("$hour:$minute");
+          }
+          else
+          {
+            feedingLabels.add("${time.day}/${time.month}");
+          }
         }
         else
         {
@@ -434,6 +486,7 @@ class _AnalyticsPageState extends State<AnalyticsPage>
       final entries = raw.values.map((e) => {
         "value": e["value"],
         "time": e["time"],
+
       })
           .where((e) => e["time"] != null)
           .toList();
@@ -511,6 +564,8 @@ class _AnalyticsPageState extends State<AnalyticsPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                _rangeButton("24 Hours"),
+                SizedBox(width: 10),
                 _rangeButton("7 Days"),
                 SizedBox(width: 10),
                 _rangeButton("30 Days"),
