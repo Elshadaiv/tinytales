@@ -53,6 +53,8 @@ class _AnalyticsPageState extends State<AnalyticsPage>
 
   bool isLoading = true;
 
+  String sleepTodayText = "";
+  String sleepSuggestedText = "";
 
   @override
   void initState()
@@ -313,6 +315,7 @@ class _AnalyticsPageState extends State<AnalyticsPage>
     final snapshot = await db.child("users/$userId/tracking/$selectedBabyId/sleeps").get();
     sleepSpots = [];
     sleepLabels = [];
+    int totalSleepTodayMins = 0;
 
     if (snapshot.exists)
     {
@@ -358,16 +361,44 @@ class _AnalyticsPageState extends State<AnalyticsPage>
 
       for (int i = 0; i < filtered.length; i++)
       {
-        final mins = filtered[i]["durationMinutes"] is int
-            ? filtered[i]["durationMinutes"]
+        final int mins = filtered[i]["durationMinutes"] is int
+            ? filtered[i]["durationMinutes"] as int
             : int.tryParse(filtered[i]["durationMinutes"].toString()) ?? 0;
         final hours = mins / 60.0;
         final time = DateTime.tryParse(filtered[i]["endTime"].toString());
 
+        if (time != null)
+        {
+          final now = DateTime.now();
+
+          if (time.year == now.year &&
+              time.month == now.month &&
+              time.day == now.day)
+          {
+            totalSleepTodayMins += mins;
+          }
+        }
+
         sleepSpots.add(FlSpot(i.toDouble(), hours));
         sleepLabels.add(time != null ? "${time.day}/${time.month}" : "${i + 1}");
       }
-    }
+
+      final h = totalSleepTodayMins ~/ 60;
+      final m = totalSleepTodayMins % 60;
+
+      sleepTodayText = "Today: ${h}h ${m}m slept";
+      if (h < 11)
+      {
+        sleepSuggestedText = "Below recommended sleep (11–14h)";
+      }
+      else if (h > 14)
+      {
+        sleepSuggestedText = "Above typical sleep range";
+      }
+      else
+      {
+        sleepSuggestedText = "Within healthy sleep range";
+      }    }
     if (mounted) setState(()
     {
       isLoading = false;
@@ -497,14 +528,51 @@ class _AnalyticsPageState extends State<AnalyticsPage>
         return at.compareTo(bt);
       });
 
+      final now = DateTime.now();
+
       List<Map<String, dynamic>> filtered = entries;
-      if (selectedRange == "7 Days" && entries.length > 7)
+
+      if (selectedRange == "24 Hours")
       {
-        filtered = entries.sublist(entries.length - 7);
+        filtered = entries.where((e)
+        {
+          final time = DateTime.tryParse(e["time"].toString());
+
+          if (time == null)
+          {
+            return false;
+          }
+
+          return now.difference(time).inHours <= 24;
+        }).toList();
       }
-      else if (selectedRange == "30 Days" && entries.length > 30)
+      else if (selectedRange == "7 Days")
       {
-        filtered = entries.sublist(entries.length - 30);
+        filtered = entries.where((e)
+        {
+          final time = DateTime.tryParse(e["time"].toString());
+
+          if (time == null)
+          {
+            return false;
+          }
+
+          return now.difference(time).inDays <= 7;
+        }).toList();
+      }
+      else if (selectedRange == "30 Days")
+      {
+        filtered = entries.where((e)
+        {
+          final time = DateTime.tryParse(e["time"].toString());
+
+          if (time == null)
+          {
+            return false;
+          }
+
+          return now.difference(time).inDays <= 30;
+        }).toList();
       }
 
       for (int i = 0; i < filtered.length; i++)
@@ -513,8 +581,24 @@ class _AnalyticsPageState extends State<AnalyticsPage>
         final time = DateTime.tryParse(filtered[i]["time"].toString());
 
         temperatureSpots.add(FlSpot(i.toDouble(), value));
-        temperatureLabels.add(time != null ? "${time.day}/${time.month}" : "${i + 1}");
-      }
+        if (time != null)
+        {
+          final hour = time.hour.toString().padLeft(2, '0');
+          final minute = time.minute.toString().padLeft(2, '0');
+
+          if (selectedRange == "24 Hours")
+          {
+            temperatureLabels.add("$hour:$minute");
+          }
+          else
+          {
+            temperatureLabels.add("${time.day}/${time.month}");
+          }
+        }
+        else
+        {
+          temperatureLabels.add("${i + 1}");
+        }      }
     }
 
     if (mounted) setState(()
@@ -600,6 +684,26 @@ class _AnalyticsPageState extends State<AnalyticsPage>
                     style: TextStyle(color: Colors.black54,),
                   ),
                   SizedBox(height: 16),
+
+                  if (selectedMetric == "Sleep") ...[
+                    Text(
+                      sleepTodayText,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      sleepSuggestedText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    SizedBox(height: 14),
+                  ],
 
                   Container(
                     height: 260,
