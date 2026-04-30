@@ -1,16 +1,20 @@
-# tinytales
+# Tiny Tales
 
-A new Flutter project.
+Tiny Tales is a mobile application developed to support first-time parents in managing and understanding their baby’s daily needs. The application combines traditional baby tracking features with insights to help users make more informed decisions.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- Baby profile management  
+- Activity tracking (feeding, sleep, nappies, temperature, medication, growth)  
+- Smart care alerts based on tracking patterns  
+- Machine learning cry detection (pain vs non-pain)  
+- Fever guidance with medication safety checks  
+- Milestones tracking with progress indicators and videos  
+- Immunisation passport with PDF export  
+- Analytics and data visualisation  
+- Community map with nearby events and resources  
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Purpose
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Tiny Tales was developed to address the limitations of existing baby tracking apps by not only recording data but also helping parents understand and interpret it through different features.
