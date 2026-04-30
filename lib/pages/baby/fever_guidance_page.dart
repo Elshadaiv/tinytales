@@ -431,7 +431,7 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
         return {
           "canGive": false,
           "message":
-          "Cannot give $type. $otherType was given recently. Wait $hoursLeft more hour${hoursLeft == 1 ? "" : "s"}.",
+          "Cannot give $type. Wait $hoursLeft more hour${hoursLeft == 1 ? "" : "s"}.",
         };
       }
     }
@@ -468,7 +468,7 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
     {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Cannot give $type right now. ${safety["message"]}"),        ),
+          content: Text("Cannot give $type right now."),        ),
       );
       return;
     }
