@@ -1046,6 +1046,15 @@ class HomePageState extends State<HomePage> {
 
   void _openGrowthChart()
   {
+    if (selectedBabyId == null || firstWeight == null || currentWeightVal == null)
+    {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("No growth chart available yet. Update growth first."),
+        ),
+      );
+      return;
+    }
     Navigator.push(
       context,
       MaterialPageRoute(
