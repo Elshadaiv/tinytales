@@ -45,6 +45,9 @@ class HomePageState extends State<HomePage> {
   String smartAlertTitle = "";
   String smartAlertMessage = "";
 
+  String currentWeight = "";
+  String currentHeight = "";
+
   String latestMedication = "";
   String latestMedicationTime = "";
   String homeTempStatus = "";
@@ -59,6 +62,12 @@ class HomePageState extends State<HomePage> {
   DateTime? lastNappyTime;
   DateTime? lastSleepEndTime;
   bool alertShown = false;
+
+
+  double? firstWeight;
+  double? currentWeightVal;
+  String growthInsight = "";
+
 
 
   List<Widget> get pages
@@ -148,6 +157,10 @@ class HomePageState extends State<HomePage> {
                   _summary("Temperature", lastTemp, Icons.thermostat, "temperature"),
                   _summary("Last Nappy", lastNappy, Icons.baby_changing_station, "nappy"),
                 ],
+            ),
+            SizedBox(height: 12),
+            Center(
+              child: _growthSummary(),
             ),
           ],
         ),
@@ -247,6 +260,9 @@ class HomePageState extends State<HomePage> {
           "name": doc.get("name").toString(),
           "dob": (data["dob"] ?? "").toString(),
           "imageBase64": (data["imageBase64"] ?? "").toString(),
+          "weight": (data["weight"] ?? "").toString(),
+          "height": (data["height"] ?? "").toString(),
+          "initialWeight": (data["initialWeight"] ?? "").toString(),
         };
     }).toList();
     if (babies.isNotEmpty)
@@ -401,6 +417,40 @@ class HomePageState extends State<HomePage> {
         lastSleep = sleep ?? "Not recorded";
         lastNappy = nappy ?? "Not recorded";
         lastTemp = temp ?? "Not recorded";
+
+        final baby = babies.firstWhere((b) => b["id"] == babyId, orElse: () => <String, dynamic>{},
+        );
+
+        currentWeight = baby["weight"] != null && baby["weight"].toString().isNotEmpty
+            ? "${baby["weight"]} kg"
+            : "Not recorded";
+
+        final weightStr = baby["weight"]?.toString();
+        currentWeightVal = double.tryParse(weightStr ?? "");
+
+        final createdWeightStr = baby["initialWeight"]?.toString();
+        firstWeight = double.tryParse(createdWeightStr ?? "");
+
+        currentHeight = baby["height"] != null && baby["height"].toString().isNotEmpty
+            ? "${baby["height"]} cm"
+            : "Not recorded";
+
+        if (currentWeightVal != null && firstWeight != null)
+        {
+          final diff = currentWeightVal! - firstWeight!;
+          if (diff > 0)
+          {
+            growthInsight = "Gaining weight (+${diff.toStringAsFixed(1)} kg)";
+          }
+          else if (diff < 0)
+          {
+            growthInsight = "Weight decrease (${diff.toStringAsFixed(1)} kg)";
+          }
+          else
+          {
+            growthInsight = "No weight change";
+          }
+        }
       });
     }
     catch (e)
@@ -837,6 +887,151 @@ class HomePageState extends State<HomePage> {
       ),
     );
   }
+  Widget _growthSummary()
+  {
+    return GestureDetector(
+      onTap: _openGrowthUpdate,
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.6,
+        padding: EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.green.shade100, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12, blurRadius: 8, offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.monitor_weight, size: 24, color: Colors.green),
+            SizedBox(height: 10),
+            Text(
+              "Growth", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+            SizedBox(height: 6),
+            Text(
+              "Weight: $currentWeight", style: TextStyle(fontSize: 13, color: Colors.black54),
+            ),
+            Text(
+              "Height: $currentHeight", style: TextStyle(fontSize: 13, color: Colors.black54),
+            ),
+            Text(
+              growthInsight,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.green,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              "Tap to track",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openGrowthUpdate()
+  {
+    if (selectedBabyId == null)
+    {
+      return;
+    }
+
+    final weightController = TextEditingController(
+      text: currentWeight.replaceAll(" kg", ""),
+    );
+
+    final heightController = TextEditingController(
+      text: currentHeight.replaceAll(" cm", ""),
+    );
+    showDialog(
+      context: context,
+      builder: (context)
+      {
+        return AlertDialog(
+          title: Text("Update Growth"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: weightController,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(labelText: "Weight kg"),
+              ),
+              TextField(
+                controller: heightController,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(labelText: "Height cm"),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: ()
+              {
+                Navigator.pop(context);
+              },
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async
+              {
+                final weight = weightController.text.trim();
+                final height = heightController.text.trim();
+
+                if (double.tryParse(weight) == null || double.tryParse(height) == null)
+                {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Weight and height must be numbers")),
+                  );
+                  return;
+                }
+                final docRef = FirebaseFirestore.instance
+                    .collection("baby_profiles")
+                    .doc(selectedBabyId);
+                final doc = await docRef.get();
+                Map<String, dynamic> updateData = {
+                  "weight": weight,
+                  "height": height,
+                };
+                final existingData = doc.data() as Map<String, dynamic>;
+                final oldWeight = (existingData["weight"] ?? "").toString();
+
+                if (!existingData.containsKey("initialWeight"))
+                {
+                  updateData["initialWeight"] = oldWeight.isNotEmpty ? oldWeight : weight;
+                }
+
+                await docRef.update(updateData);
+                Navigator.pop(context);
+
+                await _loadBabies();
+                await _homeSummary();
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Growth updated")),
+                );
+              },
+              child: Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
 
   void _showNearbyEventPopup(CommunityEvent event)
