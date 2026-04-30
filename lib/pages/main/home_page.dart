@@ -13,6 +13,7 @@ import 'package:tinytales/pages/main/milestone_page.dart';
 import 'dart:convert';
 
 
+import '../../data/growthchart_page.dart';
 import '../../services/analytics_page.dart';
 import '../../services/community_event.dart';
 import '../../services/community_service.dart';
@@ -891,6 +892,7 @@ class HomePageState extends State<HomePage> {
   {
     return GestureDetector(
       onTap: _openGrowthUpdate,
+      onLongPress: _openGrowthChart,
       child: Container(
         width: MediaQuery.of(context).size.width * 0.6,
         padding: EdgeInsets.all(14),
@@ -929,7 +931,7 @@ class HomePageState extends State<HomePage> {
             ),
             SizedBox(height: 8),
             Text(
-              "Tap to track",
+              "Tap to track ~ Press to view",
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.black,
@@ -1016,7 +1018,17 @@ class HomePageState extends State<HomePage> {
 
                 await docRef.update(updateData);
                 Navigator.pop(context);
+                final userId = auth.currentUser!.uid;
 
+                await FirebaseDatabase.instance
+                    .ref()
+                    .child("users/$userId/tracking/$selectedBabyId/growth")
+                    .push()
+                    .set({
+                  "weight": weight,
+                  "height": height,
+                  "time": DateTime.now().toIso8601String(),
+                });
                 await _loadBabies();
                 await _homeSummary();
 
@@ -1032,6 +1044,19 @@ class HomePageState extends State<HomePage> {
     );
   }
 
+  void _openGrowthChart()
+  {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => GrowthChartPage(
+          babyId: selectedBabyId!,
+          initialWeight: firstWeight!,
+          currentWeight: currentWeightVal!,
+        ),
+      ),
+    );
+  }
 
 
   void _showNearbyEventPopup(CommunityEvent event)

@@ -105,7 +105,7 @@ class _AddNappyFormState extends State<AddNappyForm>
           children: [
             ElevatedButton(
               onPressed: _pickImage,
-              child: Text("Add Photo of Poo"),
+              child: Text("Add Photo"),
             ),
             SizedBox(width: 10),
             if (imageBase64 != null)
