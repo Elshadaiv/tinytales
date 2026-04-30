@@ -388,6 +388,17 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
     final maxDoses24h = type == "Calpol" ? 4 : 3;
 
     final dosesLast24h = doseTimes.where((time) => now.difference(time).inHours < 24).length;
+
+    final otherType = type == "Calpol" ? "Nurofen" : "Calpol";
+
+    final otherDoseTimes = data.values
+        .where((e) => e["type"]?.toString().toLowerCase() == otherType.toLowerCase())
+        .map((e) => DateTime.tryParse(e["time"].toString()))
+        .whereType<DateTime>()
+        .toList();
+
+    otherDoseTimes.sort((a, b) => b.compareTo(a));
+
     if (dosesLast24h >= maxDoses24h)
     {
       return {
@@ -406,6 +417,21 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
         return {
           "canGive": false,
           "message": "Wait $hoursLeft more hour${hoursLeft == 1 ? "" : "s"} before giving $type again.",
+        };
+      }
+    }
+    if (otherDoseTimes.isNotEmpty)
+    {
+      final hoursSinceOther = now.difference(otherDoseTimes.first).inHours;
+
+      if (hoursSinceOther < 2)
+      {
+        final hoursLeft = 2 - hoursSinceOther;
+
+        return {
+          "canGive": false,
+          "message":
+          "Cannot give $type. $otherType was given recently. Wait $hoursLeft more hour${hoursLeft == 1 ? "" : "s"}.",
         };
       }
     }
@@ -438,7 +464,6 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
       return;
     }
     final safety = await _checkMedicationSafety(type);
-
     if (safety["canGive"] == false)
     {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -446,6 +471,14 @@ class _FeverGuidancePageState extends State<FeverGuidancePage>
           content: Text("Cannot give $type right now. ${safety["message"]}"),        ),
       );
       return;
+    }
+    if (safety["message"] != "$type can be given now.")
+    {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(safety["message"]),
+        ),
+      );
     }
     final userId = FirebaseAuth.instance.currentUser!.uid;
     final ref = FirebaseDatabase.instance

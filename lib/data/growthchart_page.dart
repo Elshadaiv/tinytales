@@ -161,6 +161,76 @@ class GrowthChartPage extends StatelessWidget {
               ),
 
               SizedBox(height: 10),
+
+              SizedBox(
+                height: 200,
+                child: StreamBuilder(
+                  stream: FirebaseDatabase.instance
+                      .ref()
+                      .child("users/${FirebaseAuth.instance.currentUser!.uid}/tracking/$babyId/growth")
+                      .onValue,
+                  builder: (context, snapshot)
+                  {
+                    if (!snapshot.hasData || snapshot.data!.snapshot.value == null)
+                    {
+                      return Text("No growth history yet.");
+                    }
+
+                    final data = snapshot.data!.snapshot.value;
+
+                    Map<dynamic, dynamic> raw = {};
+
+                    if (data is Map)
+                    {
+                      raw = data;
+                    }
+
+                    final entries = raw.values.toList();
+
+                    entries.sort((a, b)
+                    {
+                      final at = DateTime.tryParse(a["time"]) ?? DateTime(1970);
+                      final bt = DateTime.tryParse(b["time"]) ?? DateTime(1970);
+                      return bt.compareTo(at);
+                    });
+
+                    return ListView.builder(
+                      itemCount: entries.length,
+                      itemBuilder: (context, index)
+                      {
+                        final item = entries[index];
+                        final time = DateTime.tryParse(item["time"]);
+
+                        String timeText = "";
+
+                        if (time != null)
+                        {
+                          timeText =
+                          "${time.day}/${time.month}/${time.year} ${time.hour}:${time.minute.toString().padLeft(2, '0')}";
+                        }
+
+                        return Container(
+                          margin: EdgeInsets.only(bottom: 10),
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFF7F6FB),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(timeText, style: TextStyle(fontWeight: FontWeight.w700)),
+                              SizedBox(height: 4),
+                              Text("Weight: ${item["weight"]} kg"),
+                              Text("Height: ${item["height"]} cm"),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         ),
