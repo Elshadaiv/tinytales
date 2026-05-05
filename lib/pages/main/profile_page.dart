@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tinytales/data/baby_data.dart';
@@ -33,6 +34,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final newBabyHeightController = TextEditingController();
   final newBabyHospitalController = TextEditingController();
 
+    final Map<String, Uint8List> _decodedImageCache = {};
     String selectedHospital = "";
     bool showOtherHospitalField = false;
 
@@ -864,6 +866,22 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
                 final data = babies[index].data() as Map<String, dynamic>;
                 final babyId = babies[index].id;
                 final imageBase64 = (data["imageBase64"] ?? "").toString();
+                Uint8List? cachedImage;
+                if (imageBase64.isNotEmpty)
+                {
+                  cachedImage = _decodedImageCache[babyId];
+                  if (cachedImage == null)
+                  {
+                    try
+                    {
+                      cachedImage = base64Decode(imageBase64);
+                      _decodedImageCache[babyId] = cachedImage;
+                    } catch (_)
+                    {
+                      cachedImage = null;
+                    }
+                  }
+                }
                 final isUploading = uploadingBabyId == babyId;
 
                 return GestureDetector(
@@ -902,9 +920,7 @@ if (name.isEmpty || gender.isEmpty || dob.isEmpty || weight.isEmpty || height.is
                           child: CircleAvatar(
                             radius: 34,
                             backgroundColor: Colors.purple.shade100,
-                            backgroundImage: imageBase64.isNotEmpty
-                                ? MemoryImage(base64Decode(imageBase64))
-                                : null,
+                            backgroundImage: cachedImage != null ? MemoryImage(cachedImage) : null,
                             child: isUploading
                                 ? SizedBox(
                               width: 22,

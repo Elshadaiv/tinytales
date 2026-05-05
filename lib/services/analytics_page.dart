@@ -380,7 +380,24 @@ class _AnalyticsPageState extends State<AnalyticsPage>
         }
 
         sleepSpots.add(FlSpot(i.toDouble(), hours));
-        sleepLabels.add(time != null ? "${time.day}/${time.month}" : "${i + 1}");
+        if (time != null)
+        {
+          final hour = time.hour.toString().padLeft(2, '0');
+          final minute = time.minute.toString().padLeft(2, '0');
+
+          if (selectedRange == "24 Hours")
+          {
+            sleepLabels.add("$hour:$minute");
+          }
+          else
+          {
+            sleepLabels.add("${time.day}/${time.month}");
+          }
+        }
+        else
+        {
+          sleepLabels.add("${i + 1}");
+        }
       }
 
       final h = totalSleepTodayMins ~/ 60;

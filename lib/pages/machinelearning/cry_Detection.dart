@@ -103,23 +103,40 @@ class cry_Detection
     );
 
     final output = List.generate(1, (_) => List.filled(1, 0.0));_interpreter!.run(input, output);
-
     final double probability = (output[0][0] as num).toDouble();
+    final double painScore = probability;
+    final double nonPainScore = 1 - probability;
+
+    final bool painWins = painScore >= 0.60;
+    final double winningScore = painWins ? painScore : nonPainScore;
+
+    String wording;
+
+    if (winningScore < 0.55)
+    {
+      wording = "Uncertain — recommend monitoring";
+    }
+    else if (winningScore >= 0.85)
+    {
+      wording = painWins ? "This is a pain cry" : "This is a non-pain cry";
+    }
+    else if (winningScore >= 0.75)
+    {
+      wording = painWins ? "Likely pain cry" : "Likely non-pain cry";
+    }
+    else
+    {
+      wording = painWins ? "Possible pain cry" : "Possible non-pain cry";
+    }
 
     final List<Map<String, dynamic>> pairs = [
       {
-        "label": "pain",
-        "score": probability,
-        "percent": (probability * 100).round(),
-      },
-      {
-        "label": "non_pain",
-        "score": 1 - probability,
-        "percent": ((1 - probability) * 100).round(),
+        "label": painWins ? "pain" : "non_pain",
+        "wording": wording,
+        "score": winningScore,
+        "percent": (winningScore * 100).round(),
       },
     ];
-
-    pairs.sort((a, b) => (b["score"] as double).compareTo(a["score"] as double));
     return pairs;
   }
 }

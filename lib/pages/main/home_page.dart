@@ -98,7 +98,7 @@ class HomePageState extends State<HomePage> {
              child: Text(
               babies.isEmpty
               ? "Welcome!"
-              : " $selectedBabyName",
+              : " $selectedBabyName • ${_calculateBabyAge()}",
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.black87),
             ),
         ),
@@ -195,7 +195,6 @@ class HomePageState extends State<HomePage> {
     SelectedBabyService.selectedBabyId.addListener(_onSelectedBabyChanged);
     _loadBabies();
     _loadNearbyEvent();
-    _loadHomeAlerts();
   }
 
   void _onSelectedBabyChanged()
@@ -217,6 +216,38 @@ class HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+
+
+  Future<Map<String, dynamic>?> _fetchLatestEntry(String path, String timeKey) async
+  {
+    final snapshot = await db.child(path).orderByChild(timeKey).limitToLast(1).get();
+
+    if (!snapshot.exists) return null;
+
+    final value = snapshot.value;
+    Map<dynamic, dynamic> raw = {};
+
+    if (value is List)
+    {
+      raw = {
+        for (int i = 0; i < value.length; i++)
+          if (value[i] != null) i: value[i]
+      };
+    }
+    else if (value is Map)
+    {
+      raw = value;
+    }
+
+    final entries = raw.values
+        .where((e) => e != null)
+        .map((e) => Map<String, dynamic>.from(e))
+        .where((e) => e[timeKey] != null)
+        .toList();
+
+    if (entries.isEmpty) return null;
+    return entries.first;
+  }
   Future<void> _loadNearbyEvent() async
   {
     try
@@ -698,7 +729,7 @@ class HomePageState extends State<HomePage> {
     {
       final hoursSinceFeed = now.difference(lastFeedTime!).inHours;
 
-      if (hoursSinceFeed >= 4 && hoursSinceFeed < 200)
+      if (hoursSinceFeed >= 4 && hoursSinceFeed < 9999999999999999)
       {
         alerts.add({
           "icon": Icons.restaurant,
@@ -712,7 +743,7 @@ class HomePageState extends State<HomePage> {
     {
       final hoursSinceNappy = now.difference(lastNappyTime!).inHours;
 
-      if (hoursSinceNappy >= 3 && hoursSinceNappy < 200)
+      if (hoursSinceNappy >= 3 && hoursSinceNappy < 9999999)
       {
         alerts.add({
           "icon": Icons.baby_changing_station,
@@ -726,7 +757,7 @@ class HomePageState extends State<HomePage> {
     {
       final hoursAwake = now.difference(lastSleepEndTime!).inHours;
 
-      if (hoursAwake >= 2 && hoursAwake < 200)
+      if (hoursAwake >= 2 && hoursAwake < 999999999)
       {
         alerts.add({
           "icon": Icons.nightlight_round,
@@ -1290,7 +1321,28 @@ class HomePageState extends State<HomePage> {
     );
   }
 
+  String _calculateBabyAge()
+  {
+    final baby = babies.firstWhere(
+          (b) => b["id"] == selectedBabyId,
+      orElse: () => <String, dynamic>{},
+    );
 
+    final dobStr = (baby["dob"] ?? "").toString();
+    if (dobStr.isEmpty) return "";
+
+    final reg = RegExp(r'^(\d{2})[\/\.-](\d{2})[\/\.-](\d{4})$');
+    final match = reg.firstMatch(dobStr);
+    if (match == null) return "";
+
+    final dob = DateTime(int.parse(match.group(3)!), int.parse(match.group(2)!), int.parse(match.group(1)!));
+    final days = DateTime.now().difference(dob).inDays;
+    if (days < 0) return "";
+
+    if (days < 60) return "${(days / 7).floor()} weeks old";
+    if (days < 730) return "${(days / 30.44).floor()} months old";
+    return "${(days / 365.25).floor()} years old";
+  }
 
 
   @override

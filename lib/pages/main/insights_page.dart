@@ -146,7 +146,7 @@ class _InsightsPageState extends State<InsightsPage>
         path: recordingPath,
       );
 
-      await Future.delayed(Duration(seconds: 10));
+      await Future.delayed(Duration(seconds: 8));
       final path = await recorder.stop();
 
       setState(()
@@ -298,24 +298,10 @@ class _InsightsPageState extends State<InsightsPage>
 
       final top = pairs.first;
       final String topLabel = top["label"].toString();
-      final int topPercent = top["percent"] as int;
+      final String wording = (top["wording"] ?? "").toString();
 
-      String headline = "";
-
-      if (topLabel == "pain")
-      {
-        headline = "Possible Pain Cry Detected — $topPercent%";
-      }
-      else
-      {
-        headline = "Non Pain Cry Likelihood — $topPercent%";
-      }
-      String rawText = "";
-
-      for (final p in pairs.take(2))
-      {
-        rawText = "$rawText${p["label"]}: ${p["percent"]}%\n";
-      }
+      final String headline = wording;
+      final String rawText = wording;
 
       final user = FirebaseAuth.instance.currentUser;
 

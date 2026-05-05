@@ -73,60 +73,83 @@ class GrowthChartPage extends StatelessWidget {
 
               SizedBox(
                 height: 260,
-                child: BarChart(
-                  BarChartData(
-                    maxY: maxY,
-                    gridData: FlGridData(show: true),
-                    borderData: FlBorderData(show: false),
+                child: StreamBuilder(
+                  stream: FirebaseDatabase.instance
+                      .ref()
+                      .child("users/${FirebaseAuth.instance.currentUser!.uid}/tracking/$babyId/growth")
+                      .onValue,
+                  builder: (context, snapshot)
+                  {
+                    if (!snapshot.hasData || snapshot.data!.snapshot.value == null)
+                    {
+                      return Center(child: Text("No growth data yet"));
+                    }
 
-                    titlesData: FlTitlesData(
-                      topTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false)),
-                      rightTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false)),
+                    final data = snapshot.data!.snapshot.value;
+                    Map<dynamic, dynamic> raw = {};
+                    if (data is Map) raw = data;
 
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          getTitlesWidget: (value, meta)
-                          {
-                            if (value.toInt() == 0)
-                            {
-                              return Text("Initial", style: TextStyle(fontSize: 11));
-                            }
-                            if (value.toInt() == 1)
-                            {
-                              return Text("Current", style: TextStyle(fontSize: 11));
-                            }
-                            return SizedBox();
-                          },
+                    final entries = raw.values
+                        .where((e) => e != null && e["time"] != null && e["weight"] != null)
+                        .map((e) => Map<String, dynamic>.from(e))
+                        .toList();
+
+                    entries.sort((a, b)
+                    {
+                      final at = DateTime.tryParse(a["time"].toString()) ?? DateTime(1970);
+                      final bt = DateTime.tryParse(b["time"].toString()) ?? DateTime(1970);
+                      return at.compareTo(bt);
+                    });
+
+                    final List<FlSpot> spots = [];
+                    final List<String> labels = [];
+
+                    for (int i = 0; i < entries.length; i++)
+                    {
+                      final w = double.tryParse(entries[i]["weight"].toString()) ?? 0;
+                      final t = DateTime.tryParse(entries[i]["time"].toString());
+                      spots.add(FlSpot(i.toDouble(), w));
+                      labels.add(t != null ? "${t.day}/${t.month}" : "");
+                    }
+                    if (spots.isEmpty)
+                    {
+                      return Center(child: Text("No growth data yet"));
+                    }
+                    return LineChart(
+                      LineChartData(
+                        gridData: FlGridData(show: true),
+                        borderData: FlBorderData(show: false),
+                        titlesData: FlTitlesData(
+                          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              getTitlesWidget: (value, meta)
+                              {
+                                final i = value.toInt();
+                                if (i < 0 || i >= labels.length) return SizedBox();
+                                return Text(labels[i], style: TextStyle(fontSize: 10));
+                              },
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    barGroups: [
-                      BarChartGroupData(
-                        x: 0,
-                        barRods: [
-                          BarChartRodData(
-                            toY: initialWeight,
-                            width: 28, color: Colors.grey,
-                            borderRadius: BorderRadius.circular(6),
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: spots,
+                            isCurved: true,
+                            barWidth: 3,
+                            color: Colors.green,
+                            dotData: FlDotData(show: true),
+                            belowBarData: BarAreaData(
+                              show: true,
+                              color: Colors.green.withOpacity(0.15),
+                            ),
                           ),
                         ],
                       ),
-
-                      BarChartGroupData(
-                        x: 1,
-                        barRods: [
-                          BarChartRodData(
-                            toY: currentWeight,
-                            width: 28, color: Colors.green,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
 
